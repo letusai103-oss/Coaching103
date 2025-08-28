@@ -241,7 +241,7 @@
       </div>
       <div class="flex justify-end space-x-2 mt-6">
         <button onclick="hideModal(document.getElementById('addStudentModal'))" class="btn btn-secondary">Cancel</button>
-        <button onclick="addStudent()" class="btn btn-primary">Add Student</button>
+        <button id="addStudentBtn" onclick="addStudent(event)" class="btn btn-primary">Add Student</button>
       </div>
     </div>
   </div>
@@ -364,11 +364,28 @@
     </div>
   </div>
 
+  <div id="offlineTestModal" class="modal-overlay">
+      <div class="modal-content">
+          <h2 class="text-2xl font-bold mb-4">Add Offline Test Results</h2>
+          <div class="space-y-4">
+              <input id="offlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title (e.g., Mid-Term Physics)">
+              <input id="offlineTestTotalMarks" type="number" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Total Marks">
+              <div id="offlineStudentMarksContainer" class="space-y-2 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
+                  <!-- Student marks entry will be populated here -->
+              </div>
+          </div>
+          <div class="flex justify-end space-x-2 mt-6">
+              <button onclick="hideModal(document.getElementById('offlineTestModal'))" class="btn btn-secondary">Cancel</button>
+              <button id="saveOfflineTestBtn" onclick="saveOfflineTest(event)" class="btn btn-primary">Save Results</button>
+          </div>
+      </div>
+  </div>
+
 
   <script>
-    const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
-    const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4"; // IMPORTANT: Replace with your actual Gemini API Key
+    const SUPABASE_URL = "https://xukprmjdxdtisxqibvdb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1a3BybWpkeGR0aXN4cWlidmRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyOTIyMDcsImV4cCI6MjA3MTg2ODIwN30.g3RI8zyqGNk7yCBsR5KBlNd9hiiZvQmYZhHCNzqZhp4";
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // IMPORTANT: Replace with your actual Gemini API Key
 
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
@@ -425,6 +442,7 @@
     const takeTestModal = document.getElementById('takeTestModal');
     const aiTestGeneratorModal = document.getElementById('aiTestGeneratorModal');
     const viewSubmissionsModal = document.getElementById('viewSubmissionsModal');
+    const offlineTestModal = document.getElementById('offlineTestModal');
 
 
     const showModal = (m) => m.style.display = 'flex';
@@ -495,6 +513,7 @@
       loginPage.classList.add('hidden');
       await renderStudentDashboard();
       studentDashboard.classList.remove('hidden');
+      checkForNudges(); // FIX: Check for nudges after student logs in.
     });
 
     document.getElementById('parentLoginBtn').addEventListener('click', async () => {
@@ -686,7 +705,7 @@
         
         // Calculate total marks from the questions jsonb for percentage calculation
         const testsMap = new Map(tests.map(t => {
-            const totalMarks = t.questions.reduce((sum, q) => sum + (q.marks || 1), 0);
+            const totalMarks = (t.questions || []).reduce((sum, q) => sum + (q.marks || 1), 0);
             return [t.id, totalMarks];
         }));
 
@@ -834,7 +853,7 @@
         </div>`;
     }
 
-    async function addStudent(){
+    async function addStudent(event){
       const name = document.getElementById('addStudentName').value.trim();
       const section = document.getElementById('addStudentSection').value;
       const roll = document.getElementById('addStudentRoll').value.trim();
@@ -843,11 +862,29 @@
       const parentPhone = formatPhoneNumber(rawPhone);
 
       if (!name || !roll || !pin) return showNotification('Name, Roll, and PIN are required.');
-      const { error } = await supabase.from('students').insert({ name, section, roll, student_pin: pin, parent_phone: parentPhone || null, fee_status:'due' });
-      if (error) return showNotification(`Could not add student: ${error.message}`);
-      hideModal(addStudentModal);
-      showNotification('Student added!');
-      await showTeacherSection('details');
+      
+      const addBtn = event.target;
+      addBtn.disabled = true;
+      addBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Adding...`;
+
+      try {
+        const { error } = await supabase.from('students').insert({ name, section, roll, student_pin: pin, parent_phone: parentPhone || null, fee_status:'due' });
+        if (error) throw error;
+        
+        hideModal(addStudentModal);
+        showNotification('Student added!');
+        
+        // FIX: Add a small delay to allow the database to update before re-fetching
+        setTimeout(() => {
+            showTeacherSection('details');
+        }, 500);
+
+      } catch (error) {
+        showNotification(`Could not add student: ${error.message}`);
+      } finally {
+        addBtn.disabled = false;
+        addBtn.innerHTML = `Add Student`;
+      }
     }
 
     let editStudentRollGlobal = null;
@@ -930,7 +967,7 @@
             </div>
             <div id="dppLinkWrap"><input id="dppLink" class="bg-slate-700 p-2 rounded-lg w-full" placeholder="https://...pdf"></div>
             <div id="dppFileWrap" class="hidden"><input id="dppFile" type="file" class="w-full text-sm text-slate-400"></div>
-            <button class="btn btn-primary mt-2" onclick="addDPP()">Save DPP</button>
+            <button class="btn btn-primary mt-2" onclick="addDPP(event)">Save DPP</button>
           </div>
           <h3 class="text-xl font-bold border-t border-slate-700 pt-4">DPPs (Newest first)</h3>
           <div class="overflow-x-auto">
@@ -942,7 +979,7 @@
         </div>`;
     }
 
-    async function addDPP() {
+    async function addDPP(event) {
         const title = document.getElementById('dppTitle').value.trim();
         if(!title){ showNotification('DPP Title is required'); return; }
         const date = document.getElementById('dppDate').value || todayISO();
@@ -1558,114 +1595,108 @@
       }
     }
 
-    let studentPerfSelectedTestId = 'all';
-    let studentPerfSelectedMonth = 'all';
     async function renderStudentPerformance(){
-      const roll = loggedInEntity.roll;
-      const [perfRes, teachersRes, testsRes, attendanceRes] = await Promise.all([
-        supabase.from('performance').select('teacher_id,subject,score,test_id,student_roll').eq('student_roll', roll),
-        supabase.from('teachers').select('id,name').eq('section', activeSection),
-        supabase.from('online_tests').select('id, title, created_at'),
-        supabase.from('attendance').select('status').eq('student_roll', roll)
-      ]);
-      const rows = perfRes.data || [];
-      const tests = testsRes.data || [];
-      const tMap = new Map((teachersRes.data||[]).map(t=>[t.id,t.name]));
-      const testsMap = new Map(tests.map(t=>[t.id, t]));
-      const monthKey = (d) => (d||'').slice(0,7);
-      const unique = (arr)=>[...new Set(arr)];
-      const months = unique(tests.map(t => monthKey(t.created_at))).filter(Boolean);
-      const monthOptions = '<option value="all">All months</option>' + months.map(m=>`<option value="${m}" ${m===studentPerfSelectedMonth?'selected':''}>${m}</option>`).join('');
-      const testOptions = '<option value="all">All tests</option>' + tests.map(t=>`<option value="${t.id}" ${String(t.id)===String(studentPerfSelectedTestId)?'selected':''}>${t.title}</option>`).join('');
+        const roll = loggedInEntity.roll;
+        const [perfRes, teachersRes, testsRes, attendanceRes] = await Promise.all([
+            supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll),
+            supabase.from('teachers').select('id,name').eq('section', activeSection),
+            supabase.from('online_tests').select('id, title, created_at, total_marks').eq('section', activeSection),
+            supabase.from('attendance').select('status').eq('student_roll', roll)
+        ]);
 
-      const filtered = rows.filter(r=>{
-        const byTest = (studentPerfSelectedTestId==='all') || (r.test_id && String(r.test_id)===String(studentPerfSelectedTestId));
-        const byMonth = (studentPerfSelectedMonth==='all') || (r.test_id && monthKey(testsMap.get(r.test_id)?.created_at)===studentPerfSelectedMonth);
-        return byTest && byMonth;
-      });
+        const performanceData = perfRes.data || [];
+        const tests = testsRes.data || [];
+        const tMap = new Map((teachersRes.data || []).map(t => [t.id, t.name]));
+        const testsMap = new Map(tests.map(t => [t.id, t]));
 
-      const chartContainer = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="bg-slate-800 p-4 rounded-lg">
-                <h3 class="text-lg font-bold text-center mb-2">My Attendance</h3>
-                <canvas id="studentAttendanceChart"></canvas>
-            </div>
-            <div class="bg-slate-800 p-4 rounded-lg">
-                <h3 class="text-lg font-bold text-center mb-2">My Test Scores</h3>
-                <canvas id="studentMarksChart"></canvas>
-            </div>
-        </div>`;
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        const thisMonthStr = now.toISOString().slice(0, 7);
+        const thisYearStr = now.getFullYear().toString();
 
-      let mainContent;
-      if (!filtered.length) {
-        mainContent = `<p class="text-slate-400 ml-auto text-sm">No records. ${tests.length? 'Try different filters.' : 'No tests yet.'}</p>`;
-      } else {
-        let sum=0; filtered.forEach(r=> sum += Number(r.score||0));
-        const avg = (sum/filtered.length).toFixed(2);
-        const cards = filtered.map(r=>`
-            <div class="bg-slate-800 p-4 rounded-lg">
-            <h3 class="text-xl font-bold mb-2">${r.subject} <span class="text-sm font-normal text-slate-400">(with ${tMap.get(r.teacher_id)||'—'})</span></h3>
-            <p>Score: <span class="font-bold text-indigo-400">${r.score ?? '—'}</span></p>
-            </div>`).join('');
-        mainContent = `
-            <div class="space-y-4">
-                <div class="bg-slate-800 p-4 rounded-lg">
-                    <h3 class="text-2xl font-bold">Overall Average</h3>
-                    <p class="text-4xl font-bold text-indigo-400">${avg}</p>
-                </div>
-                <h3 class="text-2xl font-bold mt-6">Subject Performance</h3>
-                <div class="grid md:grid-cols-2 gap-4">${cards}</div>
-            </div>`;
-      }
+        const dailyPerf = performanceData.filter(p => p.created_at.slice(0, 10) === todayStr);
+        const monthlyPerf = performanceData.filter(p => p.created_at.slice(0, 7) === thisMonthStr);
+        const yearlyPerf = performanceData.filter(p => p.created_at.slice(0, 4) === thisYearStr);
 
-      setTimeout(()=>{
-        const a = document.getElementById('stuTestFilter');
-        const b = document.getElementById('stuMonthFilter');
-        if (a) a.onchange = (e)=>{ studentPerfSelectedTestId = e.target.value || 'all'; showStudentSection('performance'); };
-        if (b) b.onchange = (e)=>{ studentPerfSelectedMonth = e.target.value || 'all'; showStudentSection('performance'); };
-
-        const presentCount = attendanceRes.data.filter(a => a.status === 'P').length;
-        const absentCount = attendanceRes.data.filter(a => a.status === 'A').length;
-        const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
-        if (attendanceCtx) {
-            if(chartInstances.studentAttendanceChart) chartInstances.studentAttendanceChart.destroy();
-            chartInstances.studentAttendanceChart = new Chart(attendanceCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['Present', 'Absent'],
-                    datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'] }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
-            });
-        }
-        
-        const marksCtx = document.getElementById('studentMarksChart')?.getContext('2d');
-        if (marksCtx) {
-            const testNames = filtered.map(p => testsMap.get(p.test_id)?.title || 'Unknown Test');
-            const scores = filtered.map(p => p.score);
-            if(chartInstances.studentMarksChart) chartInstances.studentMarksChart.destroy();
-            chartInstances.studentMarksChart = new Chart(marksCtx, {
-                type: 'bar',
-                data: {
-                    labels: testNames,
-                    datasets: [{ label: 'Score', data: scores, backgroundColor: '#6366f1' }]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } },
-                    responsive: true,
-                    plugins: { legend: { display: false } }
+        const calculateAverage = (perfArray) => {
+            if (perfArray.length === 0) return 'N/A';
+            let totalScore = 0;
+            let totalMaxScore = 0;
+            perfArray.forEach(p => {
+                const test = testsMap.get(p.test_id);
+                if (test && test.total_marks) {
+                    totalScore += p.score;
+                    totalMaxScore += test.total_marks;
                 }
             });
-        }
-      },0);
+            return totalMaxScore > 0 ? `${((totalScore / totalMaxScore) * 100).toFixed(1)}%` : 'N/A';
+        };
 
-      return `
-        <div class="bg-slate-800 p-4 rounded-lg mb-4 flex flex-wrap gap-2 items-center">
-          <label class="text-slate-400">Test:</label><select id="stuTestFilter" class="bg-slate-700 p-2 rounded-lg text-white">${testOptions}</select>
-          <label class="text-slate-400 ml-2">Month:</label><select id="stuMonthFilter" class="bg-slate-700 p-2 rounded-lg text-white">${monthOptions}</select>
-        </div>
-        ${chartContainer}
-        ${mainContent}
+        const chartContainer = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-bold text-center mb-2">My Attendance</h3>
+                    <canvas id="studentAttendanceChart"></canvas>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-bold text-center mb-2">Performance Summary</h3>
+                    <div class="flex justify-around items-center h-full text-center">
+                        <div><p class="text-3xl font-bold text-indigo-400">${calculateAverage(dailyPerf)}</p><p class="text-slate-400">Today</p></div>
+                        <div><p class="text-3xl font-bold text-cyan-400">${calculateAverage(monthlyPerf)}</p><p class="text-slate-400">This Month</p></div>
+                        <div><p class="text-3xl font-bold text-emerald-400">${calculateAverage(yearlyPerf)}</p><p class="text-slate-400">This Year</p></div>
+                    </div>
+                </div>
+            </div>`;
+        
+        setTimeout(() => {
+            const presentCount = attendanceRes.data.filter(a => a.status === 'P').length;
+            const absentCount = attendanceRes.data.filter(a => a.status === 'A').length;
+            const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
+            if (attendanceCtx) {
+                if(chartInstances.studentAttendanceChart) chartInstances.studentAttendanceChart.destroy();
+                chartInstances.studentAttendanceChart = new Chart(attendanceCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Present', 'Absent'],
+                        datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'] }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
+                });
+            }
+        }, 0);
+
+        const recentTests = performanceData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+        return `
+            ${chartContainer}
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <h3 class="text-xl font-bold mb-3">Recent Test Performance</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400">
+                                <th class="p-2">Test Name</th>
+                                <th class="p-2">Subject</th>
+                                <th class="p-2">Score</th>
+                                <th class="p-2">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${recentTests.map(p => {
+                                const test = testsMap.get(p.test_id);
+                                return `
+                                <tr class="border-b border-slate-700">
+                                    <td class="p-2">${test?.title || 'Offline Test'}</td>
+                                    <td class="p-2">${p.subject}</td>
+                                    <td class="p-2">${p.score} / ${test?.total_marks || 'N/A'}</td>
+                                    <td class="p-2">${new Date(p.created_at).toLocaleDateString()}</td>
+                                </tr>
+                                `
+                            }).join('') || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No performance records yet.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         `;
     }
 
@@ -1774,6 +1805,28 @@
         }
     }
 
+    async function checkForNudges() {
+        if (loggedInUserType !== 'student') return;
+        const { data: nudges, error } = await supabase
+            .from('nudges')
+            .select('*')
+            .eq('student_roll', loggedInEntity.roll);
+
+        if (error) {
+            console.error("Error fetching nudges:", error);
+            return;
+        }
+
+        if (nudges && nudges.length > 0) {
+            const nudgeMessages = nudges.map(n => n.message).join('\n');
+            showNotification(nudgeMessages);
+
+            // Delete the nudges after showing them
+            const nudgeIds = nudges.map(n => n.id);
+            await supabase.from('nudges').delete().in('id', nudgeIds);
+        }
+    }
+
 
     async function openPerformanceReport(roll, summary=false){
       const [{ data: perf=[] }, { data: stu=[] }, { data: teachers=[] }, {data: tests=[]}] = await Promise.all([
@@ -1843,8 +1896,8 @@
 
         const testRows = (tests || []).map(test => `
             <tr>
-                <td data-label="Title">${test.title}</td>
-                <td data-label="Questions">${test.questions?.length || 0}</td>
+                <td data-label="Title">${test.title} ${test.is_offline ? '<span class="text-xs bg-sky-500/20 text-sky-400 px-2 py-1 rounded-full">Offline</span>' : ''}</td>
+                <td data-label="Questions">${test.questions?.length || 'N/A'}</td>
                 <td data-label="Created">${new Date(test.created_at).toLocaleDateString()}</td>
                 <td data-label="Actions" class="flex flex-wrap gap-2">
                     <button class="btn btn-secondary text-sm" onclick="viewSubmissions(${test.id}, '${test.title}')"><i class="fas fa-eye"></i> View Submissions</button>
@@ -1856,13 +1909,14 @@
         return `
             <div class="bg-slate-800 p-4 rounded-lg">
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <button onclick="openCreateTestModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Create Test Manually</button>
+                    <button onclick="openCreateTestModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Create Online Test</button>
+                    <button onclick="openOfflineTestModal()" class="btn btn-primary"><i class="fas fa-edit"></i> Add Offline Test Results</button>
                     <button onclick="showModal(aiTestGeneratorModal)" class="btn btn-primary"><i class="fas fa-robot"></i> Create Test with AI</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="responsive-table">
                         <thead><tr><th>Title</th><th>Questions</th><th>Created</th><th>Actions</th></tr></thead>
-                        <tbody>${testRows || '<tr><td colspan="4" class="text-slate-400">No online tests created yet.</td></tr>'}</tbody>
+                        <tbody>${testRows || '<tr><td colspan="4" class="text-slate-400">No tests created yet.</td></tr>'}</tbody>
                     </table>
                 </div>
             </div>
@@ -2056,6 +2110,10 @@
     }
     
     async function submitTest(testId, questions) {
+        const submitBtn = document.getElementById('submitTestBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Submitting...`;
+
         const answers = [];
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
@@ -2068,19 +2126,115 @@
             }
         }
 
-        const { error } = await supabase.from('test_submissions').insert({
-            test_id: testId,
-            student_roll: loggedInEntity.roll,
-            answers: answers
-        });
+        try {
+            const { data: submissionData, error: submissionError } = await supabase
+                .from('test_submissions')
+                .insert({
+                    test_id: testId,
+                    student_roll: loggedInEntity.roll,
+                    answers: answers
+                })
+                .select()
+                .single();
 
-        if (error) {
-            showNotification(`Error submitting: ${error.message}`);
-        } else {
-            showNotification('Test submitted successfully!');
+            if (submissionError) throw submissionError;
+
+            showNotification('Test submitted! The AI is now grading your answers...');
             hideModal(takeTestModal);
+            
+            // Start AI grading in the background
+            autoGradeSubmission(submissionData.id, questions, answers);
+
+        } catch (error) {
+            showNotification(`Error submitting: ${error.message}`);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `Submit Answers`;
         }
     }
+
+    async function autoGradeSubmission(submissionId, questions, answers) {
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            console.warn("AI grading skipped: Gemini API key not set.");
+            return;
+        }
+
+        let scores = [];
+        let feedback = [];
+        let totalScore = 0;
+
+        for (let i = 0; i < questions.length; i++) {
+            const question = questions[i];
+            const answer = answers[i];
+            let score = 0;
+            let fb = "N/A";
+
+            if (question.type === 'objective') {
+                if (answer === question.correct_answer) {
+                    score = 1; // Assume 1 mark for correct objective questions
+                    fb = "Correct";
+                } else {
+                    score = 0;
+                    fb = "Incorrect";
+                }
+            } else if (question.type === 'subjective' && answer) {
+                const prompt = `
+                    You are an AI grading assistant.
+                    Question: "${question.question}"
+                    Student's Answer: "${answer}"
+                    Please grade this answer out of 5 and provide brief feedback.
+                    Return your response as a JSON object with two keys: "score" (an integer) and "feedback" (a string).
+                `;
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    if (!response.ok) throw new Error('API request failed');
+                    const data = await response.json();
+                    const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                    score = result.score || 0;
+                    fb = result.feedback || "AI analysis failed.";
+                } catch (e) {
+                    console.error("AI grading error:", e);
+                    score = 0;
+                    fb = "Could not be graded by AI.";
+                }
+            }
+            scores.push(score);
+            feedback.push(fb);
+            totalScore += score;
+        }
+
+        // Update the submission record with scores and feedback
+        const { error: updateError } = await supabase
+            .from('test_submissions')
+            .update({ scores, feedback, total_score: totalScore })
+            .eq('id', submissionId);
+        
+        if (updateError) {
+            console.error("Error updating submission with grades:", updateError);
+        }
+
+        // Also add a record to the main performance table for overall tracking
+        const { error: perfError } = await supabase
+            .from('performance')
+            .insert({
+                student_roll: loggedInEntity.roll,
+                test_id: submissionId,
+                score: totalScore,
+                subject: 'Online Test' // Generic subject for online tests
+            });
+
+        if (perfError) {
+            console.error("Error inserting into performance table:", perfError);
+        }
+    }
+
 
     document.getElementById('aiGenerateBtn').addEventListener('click', async () => {
         const topic = document.getElementById('aiTestTopic').value.trim();
@@ -2155,7 +2309,7 @@
 
         const { data: submissions, error } = await supabase
             .from('test_submissions')
-            .select('student_roll, created_at')
+            .select('student_roll, created_at, total_score')
             .eq('test_id', testId);
 
         if (error) {
@@ -2182,11 +2336,96 @@
                     <p class="font-semibold">${studentMap.get(sub.student_roll) || sub.student_roll}</p>
                     <p class="text-sm text-slate-400">Submitted on: ${new Date(sub.created_at).toLocaleString()}</p>
                 </div>
-                <button class="btn btn-secondary text-sm" disabled>
-                    <i class="fas fa-robot"></i> AI Analyze (Soon)
-                </button>
+                <div class="text-right">
+                    <p class="font-bold text-lg">${sub.total_score ?? 'Not Graded'}</p>
+                    <p class="text-xs text-slate-400">Total Score</p>
+                </div>
             </div>
         `).join('');
+    }
+
+    async function openOfflineTestModal() {
+        const container = document.getElementById('offlineStudentMarksContainer');
+        container.innerHTML = loadingSpinner;
+        showModal(offlineTestModal);
+
+        const { data: students, error } = await supabase.from('students').select('roll, name').eq('section', activeSection).order('roll');
+        if (error) {
+            container.innerHTML = `<p class="text-red-400">Could not load students.</p>`;
+            return;
+        }
+        if (students.length === 0) {
+            container.innerHTML = `<p class="text-slate-400">No students in this batch to add marks for.</p>`;
+            return;
+        }
+        container.innerHTML = students.map(s => `
+            <div class="grid grid-cols-3 items-center gap-2">
+                <label class="col-span-2 text-slate-300 truncate">${s.name} (${s.roll})</label>
+                <input type="number" class="col-span-1 bg-slate-700 p-2 rounded-lg w-full" placeholder="Score" data-roll="${s.roll}">
+            </div>
+        `).join('');
+    }
+
+    async function saveOfflineTest(event) {
+        const title = document.getElementById('offlineTestTitle').value.trim();
+        const totalMarks = document.getElementById('offlineTestTotalMarks').value;
+
+        if (!title || !totalMarks) {
+            return showNotification("Please provide a test title and total marks.");
+        }
+
+        const saveBtn = event.target;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
+
+        try {
+            // 1. Create a record for the offline test itself
+            const { data: testData, error: testError } = await supabase
+                .from('online_tests')
+                .insert({
+                    title: title,
+                    section: activeSection,
+                    teacher_id: loggedInEntity.id,
+                    is_offline: true,
+                    total_marks: parseInt(totalMarks)
+                })
+                .select()
+                .single();
+
+            if (testError) throw testError;
+
+            // 2. Collect and insert performance records for each student
+            const inputs = document.querySelectorAll('#offlineStudentMarksContainer input[data-roll]');
+            const performanceRecords = [];
+            inputs.forEach(input => {
+                const roll = input.dataset.roll;
+                const score = input.value.trim();
+                if (score !== '') { // Only add records for students who have a score
+                    performanceRecords.push({
+                        student_roll: roll,
+                        test_id: testData.id,
+                        teacher_id: loggedInEntity.id,
+                        subject: loggedInEntity.subject,
+                        score: parseInt(score)
+                    });
+                }
+            });
+
+            if (performanceRecords.length > 0) {
+                const { error: perfError } = await supabase.from('performance').insert(performanceRecords);
+                if (perfError) throw perfError;
+            }
+
+            showNotification('Offline test results saved successfully!');
+            hideModal(offlineTestModal);
+            await showTeacherSection('online_tests');
+
+        } catch (error) {
+            showNotification(`Error saving results: ${error.message}`);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `Save Results`;
+        }
     }
 
 
