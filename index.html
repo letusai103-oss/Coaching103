@@ -48,6 +48,11 @@
     .login-box-animated {
       position: relative;
       overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .login-box-animated:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 30px rgba(0,0,0,0.4);
     }
     .login-box-animated::before {
       content: '';
@@ -73,43 +78,55 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
+    .login-input {
+        transition: all 0.2s ease-in-out;
+    }
+    .login-input:focus {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+    }
   </style>
 </head>
 <body>
+  <!-- BACKGROUND -->
   <div class="fixed inset-0 -z-10 h-full w-full bg-slate-950">
     <div class="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"></div>
     <div class="absolute left-0 right-0 top-[-10%] h-[1000px] w-[1000px] rounded-full bg-[radial-gradient(circle_400px_at_50%_300px,#fbfbfb36,#0f172a)]"></div>
   </div>
   
+  <!-- LOGIN -->
   <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
     <div class="login-box-animated w-full max-w-md bg-slate-800/80 backdrop-blur-sm p-8 rounded-2xl shadow-2xl">
-      <h1 class="text-3xl font-bold text-center text-white mb-6">Coaching Centre Portal</h1>
+      <h1 class="text-3xl font-bold text-center text-white mb-2">Coaching Centre Portal</h1>
+      <p class="text-center text-slate-400 mb-6">Select your role to sign in</p>
       <div class="space-y-4">
-        <select id="userTypeSelect" class="w-full bg-slate-700 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <select id="userTypeSelect" class="w-full bg-slate-700 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 login-input">
           <option value="student">Student</option>
           <option value="teacher">Teacher</option>
           <option value="parent">Parent</option>
         </select>
         <div id="teacherLoginFields" class="hidden space-y-4">
-          <input type="password" id="teacherPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Teacher PIN">
+          <input type="password" id="teacherPinInput" class="w-full bg-slate-700 p-3 rounded-lg login-input" placeholder="Teacher PIN">
           <button id="teacherLoginBtn" class="btn btn-primary w-full">Login as Teacher</button>
         </div>
         <div id="studentLoginFields" class="space-y-4">
-          <input type="password" id="studentPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Enter Your PIN">
+          <input type="password" id="studentPinInput" class="w-full bg-slate-700 p-3 rounded-lg login-input" placeholder="Enter Your PIN">
           <button id="studentLoginBtn" class="btn btn-primary w-full">Login as Student</button>
         </div>
         <div id="parentLoginFields" class="hidden space-y-4">
-          <input type="password" id="parentPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Enter Your Child's PIN">
+          <input type="password" id="parentPinInput" class="w-full bg-slate-700 p-3 rounded-lg login-input" placeholder="Enter Your Child's PIN">
           <button id="parentLoginBtn" class="btn btn-primary w-full">Login as Parent</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- DASHBOARDS -->
   <div id="teacherDashboard" class="dashboard-grid hidden"></div>
   <div id="studentDashboard" class="dashboard-grid hidden"></div>
   <div id="parentDashboard" class="dashboard-grid hidden"></div>
 
+  <!-- MODALS -->
   <div id="notificationModal" class="modal-overlay">
     <div class="modal-content text-center">
       <p id="notificationText" class="text-lg mb-6"></p>
@@ -148,10 +165,6 @@
         <div>
           <label class="block text-slate-400 mb-1">Question</label>
           <textarea id="aiAnalyzerQuestion" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="Paste the full question here..."></textarea>
-        </div>
-         <div>
-          <label class="block text-slate-400 mb-1">Model Answer / Grading Rubric</label>
-          <textarea id="aiAnalyzerModelAnswer" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="Paste the ideal answer or grading points..."></textarea>
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Student's Answer</label>
@@ -265,39 +278,22 @@
     </div>
   </div>
 
+  <!-- Online Test Modals -->
   <div id="createTestModal" class="modal-overlay">
-      <div class="modal-content">
-          <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-magic text-indigo-400"></i>Create Online Test with AI</h2>
-          <div class="space-y-4">
-              <input id="onlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title (e.g., Physics - Chapter 4)">
-              <textarea id="onlineTestSyllabus" class="w-full bg-slate-700 p-2 rounded-lg h-24" placeholder="Enter Topic or Syllabus (e.g., Kinematics, vectors, calculus-based problems)"></textarea>
-              <div class="grid grid-cols-2 gap-4">
-                  <select id="onlineTestDifficulty" class="w-full bg-slate-700 p-2 rounded-lg">
-                      <option value="Easy">Easy</option>
-                      <option value="Medium" selected>Medium</option>
-                      <option value="Hard">Hard</option>
-                  </select>
-                  <input id="onlineTestNumQuestions" type="number" value="5" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Number of Questions">
-              </div>
-              <button id="generateQuestionsBtn" class="btn btn-primary w-full"><i class="fas fa-cogs"></i> Generate Questions with AI</button>
-              <div id="aiGenerationStatus" class="text-center text-slate-400 hidden"></div>
-              
-              <hr class="border-slate-600">
-
-              <h3 class="text-lg font-bold">Generated Questions (Editable)</h3>
-              <div id="questionsContainer" class="space-y-4 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
-                  <p class="text-slate-500 text-center p-4">Click "Generate Questions" to begin.</p>
-              </div>
-              <div class="flex gap-2">
-                  <button id="addQuestionBtn" class="btn btn-secondary"><i class="fas fa-plus"></i> Add MCQ</button>
-                  <button id="addSubjectiveQuestionBtn" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Subjective</button>
-              </div>
-          </div>
-          <div class="flex justify-end space-x-2 mt-6">
-              <button onclick="hideModal(document.getElementById('createTestModal'))" class="btn btn-secondary">Cancel</button>
-              <button id="saveOnlineTestBtn" class="btn btn-primary">Save Test</button>
-          </div>
-      </div>
+    <div class="modal-content">
+        <h2 class="text-2xl font-bold mb-4">Create Online Test</h2>
+        <div class="space-y-4">
+            <input id="onlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title">
+            <div id="questionsContainer" class="space-y-4 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
+                <!-- Questions will be added here -->
+            </div>
+            <button id="addQuestionBtn" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Question</button>
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+            <button onclick="hideModal(document.getElementById('createTestModal'))" class="btn btn-secondary">Cancel</button>
+            <button id="saveOnlineTestBtn" class="btn btn-primary">Save Test</button>
+        </div>
+    </div>
   </div>
 
   <div id="takeTestModal" class="modal-overlay">
@@ -309,22 +305,55 @@
           </div>
       </div>
   </div>
+  
+  <div id="aiTestGeneratorModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-robot text-indigo-400"></i>AI Test Generator</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-slate-400 mb-1">Topic / Syllabus</label>
+                <textarea id="aiTestTopic" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="e.g., Physics - Chapter 5: Magnetism, Class 12. Include topics like magnetic fields, Lorentz force, and electromagnets."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 mb-1">Number of Questions</label>
+                    <input type="number" id="aiTestNumQuestions" class="w-full bg-slate-900 p-2 rounded-lg" value="5">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Difficulty</label>
+                    <select id="aiTestDifficulty" class="w-full bg-slate-900 p-2 rounded-lg">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+            <button id="aiGenerateBtn" class="btn btn-primary w-full">
+              <i class="fas fa-cogs"></i> Generate Questions
+            </button>
+            <div id="aiGeneratorStatus" class="text-center text-slate-400"></div>
+        </div>
+        <div class="flex justify-end mt-4">
+            <button onclick="hideModal(document.getElementById('aiTestGeneratorModal'))" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+  </div>
 
   <div id="viewSubmissionsModal" class="modal-overlay">
-      <div class="modal-content" style="max-width: 800px;">
-          <h2 id="submissionsTitle" class="text-2xl font-bold mb-4">Test Submissions</h2>
-          <div id="submissionsContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div>
-          <div class="flex justify-end mt-6">
-              <button onclick="hideModal(document.getElementById('viewSubmissionsModal'))" class="btn btn-secondary">Close</button>
-          </div>
-      </div>
+    <div class="modal-content">
+        <h2 id="submissionsTitle" class="text-2xl font-bold mb-4">Test Submissions</h2>
+        <div id="submissionsList" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+        <div class="flex justify-end mt-4">
+            <button onclick="hideModal(document.getElementById('viewSubmissionsModal'))" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
   </div>
 
 
   <script>
-    const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
-    const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4";
+    const SUPABASE_URL = "https://xukprmjdxdtisxqibvdb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1a3BybWpkeGR0aXN4cWlidmRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyOTIyMDcsImV4cCI6MjA3MTg2ODIwN30.g3RI8zyqGNk7yCBsR5KBlNd9hiiZvQmYZhHCNzqZhp4";
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // IMPORTANT: Replace with your actual Gemini API Key
 
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
@@ -359,6 +388,7 @@
     let activeSection = '12A';
     let chartInstances = {};
 
+    // Modal references
     const loginPage = document.getElementById('loginPage');
     const teacherDashboard = document.getElementById('teacherDashboard');
     const studentDashboard = document.getElementById('studentDashboard');
@@ -376,7 +406,9 @@
     const marksEntryModal = document.getElementById('marksEntryModal');
     const createTestModal = document.getElementById('createTestModal');
     const takeTestModal = document.getElementById('takeTestModal');
+    const aiTestGeneratorModal = document.getElementById('aiTestGeneratorModal');
     const viewSubmissionsModal = document.getElementById('viewSubmissionsModal');
+
 
     const showModal = (m) => m.style.display = 'flex';
     const hideModal = (m) => m.style.display = 'none';
@@ -472,26 +504,25 @@
     document.getElementById('aiAnalyzerBtn').addEventListener('click', async () => {
         const question = document.getElementById('aiAnalyzerQuestion').value.trim();
         const answer = document.getElementById('aiAnalyzerAnswer').value.trim();
-        const modelAnswer = document.getElementById('aiAnalyzerModelAnswer').value.trim();
         const resultDiv = document.getElementById('aiAnalyzerResult');
         const analyzeBtn = document.getElementById('aiAnalyzerBtn');
         if (!question || !answer) {
-            resultDiv.textContent = 'Please provide both a question and a student answer.';
+            resultDiv.textContent = 'Please provide both a question and an answer.';
+            return;
+        }
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            resultDiv.textContent = 'Please replace "YOUR_GEMINI_API_KEY" in the script with your actual Google AI Gemini API key.';
             return;
         }
         analyzeBtn.disabled = true;
         resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
-        
         const prompt = `
-            You are an expert teacher's assistant. Your task is to analyze a student's answer for a given question based on a model answer.
+            You are an expert teacher's assistant. Your task is to analyze a student's answer for a given question.
             Provide a detailed, constructive analysis in three parts:
             1.  **Overall Score:** Give a score out of 10.
-            2.  **Strengths:** Point out what the student did well, comparing their answer to the model answer.
-            3.  **Areas for Improvement:** Suggest specific ways the student can improve their answer to be closer to the model answer. Be encouraging.
-
-            **Question:**\n${question}\n\n
-            **Model Answer/Rubric:**\n${modelAnswer || 'Not provided. Evaluate based on general correctness.'}\n\n
-            **Student's Answer:**\n${answer}`;
+            2.  **Strengths:** Point out what the student did well.
+            3.  **Areas for Improvement:** Suggest specific ways the student can improve their answer. Be encouraging.
+            **Question:**\n${question}\n\n**Student's Answer:**\n${answer}`;
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
@@ -609,17 +640,18 @@
         case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML= await renderMaterialsManager(); break;
         case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML= await renderTimetableManager(); break;
         case 'announcements': titleEl.innerText='Post Announcements'; contentEl.innerHTML= await renderAnnouncementsManager(); break;
-        case 'ai_analyzer': titleEl.innerText='AI Paper Analyzer'; contentEl.innerHTML= `<div class="bg-slate-800 p-4 rounded-lg"><p>Evaluate student answers with the power of AI. Click the button to open the standalone analyzer tool.</p><button class="btn btn-primary mt-4" onclick="showModal(aiPaperAnalyzerModal)">Open AI Paper Analyzer</button></div>`; break;
+        case 'ai_analyzer': titleEl.innerText='AI Paper Analyzer'; contentEl.innerHTML= `<div class="bg-slate-800 p-4 rounded-lg"><p>Evaluate student answers with the power of AI. Click the button to open the analyzer tool.</p><button class="btn btn-primary mt-4" onclick="showModal(aiPaperAnalyzerModal)">Open AI Paper Analyzer</button></div>`; break;
         case 'settings': titleEl.innerText='Settings'; contentEl.innerHTML= renderTeacherSettings(); break;
-        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+        default: titleEl.innerText='Coming Soon'; contentEl.innerHTML='<p>Under construction.</p>';
       }
     }
 
     async function renderTeacherHome(){
         const { data: students = [] } = await supabase.from('students').select('roll, name, fee_status').eq('section', activeSection);
         const { data: perf = [] } = await supabase.from('performance').select('student_roll, score, test_id');
-        const { data: tests = [] } = await supabase.from('tests').select('id, total_marks').eq('section', activeSection);
-        const testsMap = new Map(tests.map(t => [t.id, t.total_marks]));
+        // FIX: Changed 'tests' to 'online_tests' to match the database schema
+        const { data: tests = [] } = await supabase.from('online_tests').select('id, total_marks').eq('section', activeSection);
+        const testsMap = new Map((tests || []).map(t => [t.id, t.total_marks]));
 
         const studentData = students.map(s => {
             const studentScores = perf.filter(p => p.student_roll === s.roll && p.score !== null);
@@ -1444,7 +1476,7 @@
         case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
         case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
         case 'teachers': titleEl.innerText='My Teachers'; contentEl.innerHTML = await renderStudentTeachers(); break;
-        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+        default: titleEl.innerText='Coming Soon'; contentEl.innerHTML='<p>Under construction.</p>';
       }
     }
 
@@ -1646,10 +1678,11 @@
         case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
         case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
         case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
-        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+        default: titleEl.innerText='Coming Soon'; contentEl.innerHTML='<p>Under construction.</p>';
       }
     }
     
+    // NEW: Parent Nudge Logic
     async function sendNudgeToStudent(studentRoll) {
         const { error } = await supabase.from('nudges').insert({ student_roll: studentRoll, message: `Your parent sent a nudge to remind you to focus on your studies!` });
         if (error) {
@@ -1721,7 +1754,7 @@
       openWhatsAppMessage(`Performance Report:%0A%0A${text}`);
     };
 
-    // --- ENHANCED ONLINE TEST LOGIC ---
+    // --- ONLINE TEST LOGIC ---
     async function renderOnlineTestsManager() {
         const { data: tests, error } = await supabase.from('online_tests').select('*').eq('section', activeSection).order('created_at', { ascending: false });
         if (error) return `<p class="text-red-400">Error loading tests: ${error.message}</p>`;
@@ -1732,7 +1765,7 @@
                 <td data-label="Questions">${test.questions.length}</td>
                 <td data-label="Created">${new Date(test.created_at).toLocaleDateString()}</td>
                 <td data-label="Actions" class="flex flex-wrap gap-2">
-                    <button class="btn btn-secondary text-sm" onclick="openSubmissionsModal(${test.id}, '${test.title.replace(/'/g, "\\'")}')"><i class="fas fa-eye"></i> View Submissions</button>
+                    <button class="btn btn-secondary text-sm" onclick="viewSubmissions(${test.id}, '${test.title}')"><i class="fas fa-eye"></i> View Submissions</button>
                     <button class="btn btn-danger text-sm" onclick="deleteOnlineTest(${test.id})"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
@@ -1740,7 +1773,10 @@
 
         return `
             <div class="bg-slate-800 p-4 rounded-lg">
-                <button onclick="openCreateTestModal()" class="btn btn-primary mb-4"><i class="fas fa-plus"></i> Create New Online Test</button>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="openCreateTestModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Create Test Manually</button>
+                    <button onclick="showModal(aiTestGeneratorModal)" class="btn btn-primary"><i class="fas fa-robot"></i> Create Test with AI</button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="responsive-table">
                         <thead><tr><th>Title</th><th>Questions</th><th>Created</th><th>Actions</th></tr></thead>
@@ -1751,133 +1787,63 @@
         `;
     }
 
-    function openCreateTestModal() {
+    function openCreateTestModal(questions = []) {
         document.getElementById('onlineTestTitle').value = '';
-        document.getElementById('onlineTestSyllabus').value = '';
-        document.getElementById('questionsContainer').innerHTML = '<p class="text-slate-500 text-center p-4">Click "Generate Questions" to begin.</p>';
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '';
+        questionCount = 0;
+        if (questions.length > 0) {
+            questions.forEach(q => addQuestionToCreator(q));
+        } else {
+            addQuestionToCreator(); // Add the first empty question
+        }
         showModal(createTestModal);
     }
-    
-    document.getElementById('generateQuestionsBtn').addEventListener('click', generateTestWithAI);
-    document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestionToCreator(null, 'mcq'));
-    document.getElementById('addSubjectiveQuestionBtn').addEventListener('click', () => addQuestionToCreator(null, 'subjective'));
+
+
+    document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestionToCreator());
     
     let questionCount = 0;
-    function addQuestionToCreator(data = {}, type = 'mcq') {
-        if (document.querySelector('#questionsContainer p')) {
-            document.getElementById('questionsContainer').innerHTML = '';
-        }
+    function addQuestionToCreator(data = null) {
         questionCount++;
+        const questionId = `q${questionCount}`;
         const questionDiv = document.createElement('div');
-        questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2 question-block';
-        questionDiv.dataset.type = type;
+        questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2';
+        
+        const questionText = data ? data.question : '';
+        const options = data ? data.options : ['', '', '', ''];
+        const correctIndex = data ? data.correct_answer : -1;
 
-        let contentHTML = `
-            <div class="flex justify-between items-center">
-                <input type="text" class="w-full bg-slate-700 p-2 rounded-lg question-text" placeholder="Question ${questionCount}" value="${data.question || ''}">
-                <button class="text-red-400 hover:text-red-600 ml-2" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-trash"></i></button>
-            </div>`;
-
-        if (type === 'mcq') {
-            contentHTML += `
-                <div class="grid grid-cols-2 gap-2 mcq-options">
-                    ${[0,1,2,3].map(i => `
-                        <div class="flex items-center gap-2">
-                            <input type="radio" name="correct_${questionCount}" value="${i}" ${data.correct_answer === i ? 'checked' : ''} class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600">
-                            <input type="text" class="w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${data.options?.[i] || ''}">
-                        </div>
-                    `).join('')}
-                </div>`;
-        } else { // subjective
-            contentHTML += `<textarea class="w-full bg-slate-700 p-2 rounded-lg model-answer" placeholder="Model Answer / Grading Rubric...">${data.model_answer || ''}</textarea>`;
-        }
-        questionDiv.innerHTML = contentHTML;
+        questionDiv.innerHTML = `
+            <input type="text" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Question ${questionCount}" value="${questionText}">
+            <div class="grid grid-cols-2 gap-2">
+                ${[0,1,2,3].map(i => `
+                    <div class="flex items-center gap-2">
+                        <input type="radio" name="correct_${questionId}" value="${i}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600" ${i === correctIndex ? 'checked' : ''}>
+                        <input type="text" class="w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${options[i]}">
+                    </div>
+                `).join('')}
+            </div>
+        `;
         document.getElementById('questionsContainer').appendChild(questionDiv);
     }
-
-    async function generateTestWithAI() {
-        const syllabus = document.getElementById('onlineTestSyllabus').value.trim();
-        const difficulty = document.getElementById('onlineTestDifficulty').value;
-        const numQuestions = document.getElementById('onlineTestNumQuestions').value;
-        const statusDiv = document.getElementById('aiGenerationStatus');
-        const genBtn = document.getElementById('generateQuestionsBtn');
-
-        if (!syllabus) return showNotification('Please enter a topic or syllabus.');
-        
-        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating questions... Please wait.';
-        statusDiv.classList.remove('hidden');
-        genBtn.disabled = true;
-
-        const prompt = `
-            Generate a ${difficulty} level test with ${numQuestions} questions based on the following syllabus: "${syllabus}".
-            Include a mix of multiple-choice questions (mcq) and subjective short-answer questions.
-            Provide the output as a clean JSON array of objects, without any surrounding text or markdown.
-            Each object in the array should have:
-            1. A "type" property: either "mcq" or "subjective".
-            2. A "question" property (string).
-            3. For "mcq" type: an "options" property (an array of 4 strings) and a "correct_answer" property (the 0-based index of the correct option).
-            4. For "subjective" type: a "model_answer" property (a string explaining the ideal answer).
-
-            Example format:
-            [
-                { "type": "mcq", "question": "What is the capital of France?", "options": ["Berlin", "Madrid", "Paris", "Rome"], "correct_answer": 2 },
-                { "type": "subjective", "question": "Explain Newton's First Law.", "model_answer": "Newton's First Law states that an object will remain at rest or in uniform motion in a straight line unless acted upon by an external force. It is also known as the law of inertia." }
-            ]
-        `;
-
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            if (!response.ok) throw new Error('API request failed');
-            const data = await response.json();
-            let text = data.candidates[0].content.parts[0].text;
-            
-            // Clean up the response to get only the JSON
-            const jsonMatch = text.match(/\[[\s\S]*\]/);
-            if (!jsonMatch) throw new Error('Could not find valid JSON in AI response.');
-            
-            const questions = JSON.parse(jsonMatch[0]);
-            
-            document.getElementById('questionsContainer').innerHTML = ''; // Clear previous
-            questions.forEach(q => addQuestionToCreator(q, q.type));
-
-        } catch (e) {
-            statusDiv.textContent = `Error: ${e.message}. Please try again.`;
-            return;
-        } finally {
-            statusDiv.classList.add('hidden');
-            genBtn.disabled = false;
-        }
-    }
-
 
     document.getElementById('saveOnlineTestBtn').addEventListener('click', async () => {
         const title = document.getElementById('onlineTestTitle').value.trim();
         if (!title) return showNotification('Test title is required.');
 
         const questions = [];
-        const questionElements = document.querySelectorAll('.question-block');
+        const questionElements = document.getElementById('questionsContainer').children;
         for (const qEl of questionElements) {
-            const type = qEl.dataset.type;
-            const questionText = qEl.querySelector('.question-text').value.trim();
-            if (!questionText) return showNotification('Please ensure all question fields are filled.');
-            
-            if (type === 'mcq') {
-                const options = [...qEl.querySelectorAll('.mcq-options input[type="text"]')].map(opt => opt.value.trim());
-                const correctIndex = qEl.querySelector('.mcq-options input[type="radio"]:checked')?.value;
-                if (options.some(o => !o) || correctIndex === undefined) return showNotification('Please fill all options and select a correct answer for MCQs.');
-                questions.push({ type: 'mcq', question: questionText, options, correct_answer: parseInt(correctIndex) });
-            } else { // subjective
-                const modelAnswer = qEl.querySelector('.model-answer').value.trim();
-                if (!modelAnswer) return showNotification('Please provide a model answer for subjective questions.');
-                questions.push({ type: 'subjective', question: questionText, model_answer: modelAnswer });
-            }
-        }
+            const questionText = qEl.querySelector('input[type="text"]').value.trim();
+            const options = [...qEl.querySelectorAll('.grid input[type="text"]')].map(opt => opt.value.trim());
+            const correctIndex = qEl.querySelector('input[type="radio"]:checked')?.value;
 
-        if (questions.length === 0) return showNotification('Please add at least one question to the test.');
+            if (!questionText || options.some(o => !o) || correctIndex === undefined) {
+                return showNotification('Please fill all fields for every question.');
+            }
+            questions.push({ question: questionText, options, correct_answer: parseInt(correctIndex) });
+        }
 
         const { error } = await supabase.from('online_tests').insert({
             title,
@@ -1891,7 +1857,7 @@
         } else {
             showNotification('Online test created successfully!');
             hideModal(createTestModal);
-            await showTeacherSection('online_tests');
+            showTeacherSection('online_tests');
         }
     });
     
@@ -1902,7 +1868,7 @@
                 showNotification(`Error deleting test: ${error.message}`);
             } else {
                 showNotification('Test deleted.');
-                await showTeacherSection('online_tests');
+                showTeacherSection('online_tests');
             }
         });
     }
@@ -1934,15 +1900,12 @@
             <div class="space-y-2">
                 <p class="font-semibold">${index + 1}. ${q.question}</p>
                 <div class="space-y-1 pl-4">
-                    ${q.type === 'mcq' ?
-                        q.options.map((opt, optIndex) => `
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="q_${index}" value="${optIndex}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600">
-                                <span>${opt}</span>
-                            </label>
-                        `).join('') :
-                        `<textarea name="q_${index}" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Your answer..."></textarea>`
-                    }
+                    ${q.options.map((opt, optIndex) => `
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q_${index}" value="${optIndex}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600">
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
                 </div>
             </div>
         `).join('');
@@ -1950,22 +1913,16 @@
         const submitBtn = document.getElementById('submitTestBtn');
         const newSubmitBtn = submitBtn.cloneNode(true);
         submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-        newSubmitBtn.onclick = () => submitTest(testId, test.questions);
+        newSubmitBtn.onclick = () => submitTest(testId, test.questions.length);
 
         showModal(takeTestModal);
     }
     
-    async function submitTest(testId, questions) {
+    async function submitTest(testId, questionCount) {
         const answers = [];
-        for (let i = 0; i < questions.length; i++) {
-            const q = questions[i];
-            const inputEl = document.querySelector(`[name="q_${i}"]`);
-            if (q.type === 'mcq') {
-                const selected = document.querySelector(`input[name="q_${i}"]:checked`);
-                answers.push(selected ? parseInt(selected.value) : null);
-            } else {
-                answers.push(inputEl.value.trim());
-            }
+        for (let i = 0; i < questionCount; i++) {
+            const selected = document.querySelector(`input[name="q_${i}"]:checked`);
+            answers.push(selected ? parseInt(selected.value) : null);
         }
 
         const { error } = await supabase.from('test_submissions').insert({
@@ -1982,80 +1939,110 @@
         }
     }
 
-    async function openSubmissionsModal(testId, testTitle) {
-        document.getElementById('submissionsTitle').textContent = `Submissions for: ${testTitle}`;
-        const container = document.getElementById('submissionsContainer');
-        container.innerHTML = '<p class="text-slate-400">Loading submissions...</p>';
-        showModal(viewSubmissionsModal);
+    document.getElementById('aiGenerateBtn').addEventListener('click', async () => {
+        const topic = document.getElementById('aiTestTopic').value.trim();
+        const numQuestions = document.getElementById('aiTestNumQuestions').value;
+        const difficulty = document.getElementById('aiTestDifficulty').value;
+        const statusDiv = document.getElementById('aiGeneratorStatus');
+        const genBtn = document.getElementById('aiGenerateBtn');
 
-        const { data: testData, error: testError } = await supabase.from('online_tests').select('questions').eq('id', testId).single();
-        if(testError) { container.innerHTML = '<p class="text-red-400">Could not load test details.</p>'; return; }
-        const questions = testData.questions;
-
-        const { data: submissions, error } = await supabase.from('test_submissions').select('*, students(name, roll)').eq('test_id', testId);
-        if (error) { container.innerHTML = '<p class="text-red-400">Could not load submissions.</p>'; return; }
-
-        if (submissions.length === 0) {
-            container.innerHTML = '<p class="text-slate-400">No submissions for this test yet.</p>';
+        if (!topic) {
+            statusDiv.textContent = 'Please provide a topic.';
+            return;
+        }
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            statusDiv.textContent = 'Please set your Gemini API Key in the script first.';
             return;
         }
 
-        container.innerHTML = submissions.map(sub => `
-            <div class="bg-slate-800 p-3 rounded-lg">
-                <h4 class="font-bold text-lg">${sub.students.name} (${sub.students.roll})</h4>
-                <div class="mt-2 space-y-3">
-                    ${sub.answers.map((ans, i) => {
-                        const q = questions[i];
-                        if (q.type === 'mcq') {
-                            const isCorrect = ans === q.correct_answer;
-                            return `
-                                <div class="text-sm p-2 bg-slate-900 rounded">
-                                    <p class="font-semibold">${i+1}. ${q.question}</p>
-                                    <p>Selected: <span class="${isCorrect ? 'text-green-400' : 'text-red-400'}">${q.options[ans] || 'Not Answered'}</span></p>
-                                    <p>Correct: <span class="text-green-400">${q.options[q.correct_answer]}</span></p>
-                                </div>`;
-                        } else { // subjective
-                            const analysisId = `analysis_${sub.id}_${i}`;
-                            return `
-                                <div class="text-sm p-2 bg-slate-900 rounded">
-                                    <p class="font-semibold">${i+1}. ${q.question}</p>
-                                    <p class="text-slate-400 mt-1">Student's Answer:</p>
-                                    <p class="p-2 bg-slate-700 rounded whitespace-pre-wrap">${ans || 'Not Answered'}</p>
-                                    <button class="btn btn-secondary text-xs mt-2" onclick="runSubmissionAnalysis('${q.question.replace(/'/g, `\\'`)}', '${q.model_answer.replace(/'/g, `\\'`)}', '${(ans||'').replace(/'/g, `\\'`)}', '${analysisId}')">
-                                        <i class="fas fa-magic"></i> Analyze with AI
-                                    </button>
-                                    <div id="${analysisId}" class="mt-2 text-xs p-2 bg-slate-800 rounded whitespace-pre-wrap font-mono text-slate-300 hidden"></div>
-                                </div>`;
-                        }
-                    }).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        genBtn.disabled = true;
 
-    async function runSubmissionAnalysis(question, modelAnswer, studentAnswer, resultElementId) {
-        const resultDiv = document.getElementById(resultElementId);
-        resultDiv.classList.remove('hidden');
-        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
-
-        const prompt = `
-            You are an expert teacher. Evaluate the student's answer against the provided model answer/rubric. Provide a score out of 10 and concise, constructive feedback.
-            **Question:**\n${question}\n\n
-            **Model Answer:**\n${modelAnswer}\n\n
-            **Student's Answer:**\n${studentAnswer}`;
+        const prompt = `Generate ${numQuestions} multiple-choice questions for a coaching center test.
+        Topic: ${topic}
+        Difficulty: ${difficulty}
         
+        For each question, provide:
+        - The question text.
+        - An array of 4 options.
+        - The 0-indexed integer for the correct answer.
+        
+        Return the output as a JSON object with a single key "questions" which is an array of these question objects.`;
+
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
             });
-            if (!response.ok) throw new Error('API request failed');
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${errorData.error.message}`);
+            }
+
             const data = await response.json();
-            resultDiv.textContent = data.candidates[0].content.parts[0].text;
+            const jsonText = data.candidates[0].content.parts[0].text;
+            const generatedData = JSON.parse(jsonText);
+            
+            if (generatedData.questions && Array.isArray(generatedData.questions)) {
+                hideModal(aiTestGeneratorModal);
+                openCreateTestModal(generatedData.questions);
+                document.getElementById('onlineTestTitle').value = `AI Generated Test: ${topic.substring(0, 30)}`;
+            } else {
+                throw new Error("AI response did not contain a valid 'questions' array.");
+            }
+
         } catch (e) {
-            resultDiv.textContent = `Error: ${e.message}`;
+            statusDiv.textContent = `Error: ${e.message}`;
+        } finally {
+            genBtn.disabled = false;
         }
+    });
+
+    async function viewSubmissions(testId, testTitle) {
+        document.getElementById('submissionsTitle').textContent = `Submissions for: ${testTitle}`;
+        const listDiv = document.getElementById('submissionsList');
+        listDiv.innerHTML = '<p>Loading submissions...</p>';
+        showModal(viewSubmissionsModal);
+
+        const { data: submissions, error } = await supabase
+            .from('test_submissions')
+            .select('student_roll, created_at')
+            .eq('test_id', testId);
+
+        if (error) {
+            listDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            return;
+        }
+
+        if (submissions.length === 0) {
+            listDiv.innerHTML = '<p>No students have submitted this test yet.</p>';
+            return;
+        }
+
+        const studentRolls = submissions.map(s => s.student_roll);
+        const { data: students, error: studentError } = await supabase
+            .from('students')
+            .select('roll, name')
+            .in('roll', studentRolls);
+        
+        const studentMap = new Map(students.map(s => [s.roll, s.name]));
+
+        listDiv.innerHTML = submissions.map(sub => `
+            <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                    <p class="font-semibold">${studentMap.get(sub.student_roll) || sub.student_roll}</p>
+                    <p class="text-sm text-slate-400">Submitted on: ${new Date(sub.created_at).toLocaleString()}</p>
+                </div>
+                <button class="btn btn-secondary text-sm" disabled>
+                    <i class="fas fa-robot"></i> AI Analyze (Soon)
+                </button>
+            </div>
+        `).join('');
     }
 
 
@@ -2065,5 +2052,4 @@
     });
   </script>
 </body>
-
 </html>
