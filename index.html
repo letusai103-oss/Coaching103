@@ -420,6 +420,11 @@
           <div class="space-y-4">
               <input id="offlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title (e.g., Mid-Term Physics)">
               <input id="offlineTestTotalMarks" type="number" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Total Marks">
+              <!-- NEW: File upload for offline test paper -->
+              <div>
+                <label class="block text-slate-400 mb-1">Upload Test Paper (Image/PDF, Optional)</label>
+                <input id="offlineTestFile" type="file" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+              </div>
               <div id="offlineStudentMarksContainer" class="space-y-2 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
                   <!-- Student marks entry will be populated here -->
               </div>
@@ -435,7 +440,7 @@
   <script>
     const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
-    const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4"; // IMPORTANT: Replace with your actual Gemini API Key
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // IMPORTANT: Replace with your actual Gemini API Key
 
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
@@ -1946,6 +1951,7 @@
                 <td data-label="Questions">${test.questions?.length || 'N/A'}</td>
                 <td data-label="Created">${new Date(test.created_at).toLocaleDateString()}</td>
                 <td data-label="Actions" class="flex flex-wrap gap-2">
+                    ${test.attachment_url ? `<a href="${test.attachment_url}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-paperclip"></i> View Paper</a>` : ''}
                     <button class="btn btn-secondary text-sm" onclick="viewSubmissions(${test.id}, '${test.title}')"><i class="fas fa-eye"></i> View Submissions</button>
                     <button class="btn btn-danger text-sm" onclick="deleteOnlineTest(${test.id})"><i class="fas fa-trash"></i></button>
                 </td>
@@ -1998,6 +2004,7 @@
         const correctIndex = data?.correct_answer ?? -1;
         const sampleAnswer = data?.sample_answer || '';
 
+        // FIX: Changed question input to a textarea for better UX with longer questions.
         questionDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <p class="font-bold text-slate-400">Question ${questionCount}</p>
@@ -2055,13 +2062,12 @@
 
             if (type === 'objective') {
                 const options = [...qEl.querySelectorAll('.option-input')].map(opt => opt.value.trim());
-                const correctIndex = qEl.querySelector('input[type="radio"]:checked')?.value;
+                const correctIndex = qEl.querySelector(`input[name="correct_q${qNum}"]:checked`)?.value;
 
                 if (options.some(o => !o)) {
                     return showNotification(`Please fill all 4 options for Objective Question #${qNum}.`);
                 }
                 if (correctIndex === undefined) {
-                    // This is the fix for the user's main complaint.
                     return showNotification(`Please select the correct answer for Question #${qNum}.`);
                 }
                 questionData.options = options;
@@ -2096,7 +2102,7 @@
     });
     
     async function deleteOnlineTest(testId) {
-        showConfirmation('Are you sure you want to delete this online test and all its submissions?', async () => {
+        showConfirmation('Are you sure you want to delete this test and all its submissions?', async () => {
             const { error } = await supabase.from('online_tests').delete().eq('id', testId);
             if (error) {
                 showNotification(`Error deleting test: ${error.message}`);
@@ -2115,9 +2121,12 @@
             <div class="bg-slate-800 p-4 rounded-lg flex justify-between items-center">
                 <div>
                     <h3 class="text-xl font-bold">${test.title}</h3>
-                    <p class="text-sm text-slate-400">${test.questions?.length || 0} questions</p>
+                    <p class="text-sm text-slate-400">${test.is_offline ? 'Offline Test' : (test.questions?.length || 0) + ' questions'}</p>
                 </div>
-                ${!isParent ? `<button class="btn btn-primary" onclick="startTest(${test.id})">Start Test</button>` : ''}
+                <div>
+                    ${test.attachment_url ? `<a href="${test.attachment_url}" target="_blank" class="btn btn-secondary mr-2"><i class="fas fa-download"></i> Paper</a>` : ''}
+                    ${!isParent && !test.is_offline ? `<button class="btn btn-primary" onclick="startTest(${test.id})">Start Test</button>` : ''}
+                </div>
             </div>
         `).join('');
 
@@ -2272,12 +2281,11 @@
         
         if (updateError) console.error("Error updating submission with grades:", updateError);
 
-        // **FIX:** Use the correct testId when inserting into the performance table.
         const { error: perfError } = await supabase
             .from('performance')
             .upsert({
                 student_roll: loggedInEntity.roll,
-                test_id: testId, // Use the actual test ID
+                test_id: testId,
                 score: totalScore,
                 subject: 'Online Test',
                 teacher_id: loggedInEntity.id
@@ -2285,12 +2293,11 @@
 
         if (perfError) console.error("Error inserting into performance table:", perfError);
 
-        // Update total marks on the test itself if not already present
         const { error: testUpdateError } = await supabase
             .from('online_tests')
             .update({ total_marks: totalMarks })
             .eq('id', testId)
-            .is('total_marks', null); // Only update if it's not already set
+            .is('total_marks', null);
         
         if (testUpdateError) console.error("Error updating total marks on test:", testUpdateError);
     }
@@ -2447,6 +2454,7 @@
     async function saveOfflineTest(event) {
         const title = document.getElementById('offlineTestTitle').value.trim();
         const totalMarks = document.getElementById('offlineTestTotalMarks').value;
+        const file = document.getElementById('offlineTestFile').files[0];
 
         if (!title || !totalMarks) {
             return showNotification("Please provide a test title and total marks.");
@@ -2457,6 +2465,12 @@
         saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
 
         try {
+            let attachmentUrl = null;
+            if (file) {
+                attachmentUrl = await uploadToBucket(file, BUCKETS.tests, activeSection);
+                if (!attachmentUrl) throw new Error("File upload failed.");
+            }
+
             const { data: testData, error: testError } = await supabase
                 .from('online_tests')
                 .insert({
@@ -2464,7 +2478,8 @@
                     section: activeSection,
                     teacher_id: loggedInEntity.id,
                     is_offline: true,
-                    total_marks: parseInt(totalMarks)
+                    total_marks: parseInt(totalMarks),
+                    attachment_url: attachmentUrl
                 })
                 .select()
                 .single();
