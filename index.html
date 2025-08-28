@@ -438,9 +438,10 @@
 
 
   <script>
-    const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
+  const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
     const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4"; // IMPORTANT: Replace with your actual Gemini API Key
+
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
     if (!__SUPABASE_URL || !__SUPABASE_ANON_KEY) {
@@ -451,6 +452,7 @@
     const BUCKETS = { tests: 'tests', dpps: 'dpps', materials: 'materials' };
     const sanitizeFilename = (name) => String(name||'').replace(/\s+/g,'-').replace(/[^a-zA-Z0-9._-]/g,'').toLowerCase();
     
+    // FIX: Added storage_path to return object for easier deletion
     async function uploadToBucket(file, bucket, section){
       try{
         if(!file) throw new Error('No file selected');
@@ -459,7 +461,7 @@
         if (upErr) throw upErr;
         const { data: pub } = await supabase.storage.from(bucket).getPublicUrl(path);
         if (!pub?.publicUrl) throw new Error('Could not resolve public URL');
-        return pub.publicUrl;
+        return { publicUrl: pub.publicUrl, storagePath: path };
       } catch (e){
         showNotification(`Upload error: ${e.message}. Please check Supabase bucket setup.`);
         return null;
@@ -976,15 +978,12 @@
 
     async function fetchDPPsForSection(section){
       const { data = [], error } = await supabase.from('dpps')
-        .select('id, title, date, pdf_link, created_at, section')
+        .select('*') // FIX: Select all columns to get storage_path
         .eq('section', section).order('created_at', { ascending:false }).order('id', { ascending:false });
       if (error) { console.error("Error fetching DPPs:", error); return []; }
       return data;
     }
-    async function insertDPPRow({ title, date, link, section }){
-      const { error } = await supabase.from('dpps').insert({ title, date, pdf_link: link, section });
-      if (error) throw error;
-    }
+    
     async function renderDPPsManager(){
       const dpps = await fetchDPPsForSection(activeSection);
       setTimeout(() => {
@@ -1000,7 +999,7 @@
           <td data-label="Date">${(d.date||'').slice(0,10)}</td>
           <td data-label="Actions" class="flex flex-wrap gap-2">
             <a href="${d.pdf_link}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-eye"></i></a>
-            <button class="btn btn-danger text-sm" onclick="showConfirmation('Delete this DPP?', async()=>{ await supabase.from('dpps').delete().eq('id', ${d.id}); showNotification('DPP deleted'); showTeacherSection('dpps'); })"><i class="fas fa-trash"></i></button>
+            <button class="btn btn-danger text-sm" onclick="deleteDPP(${d.id}, '${d.storage_path || ''}')"><i class="fas fa-trash"></i></button>
             <button class="btn btn-whatsapp text-sm" onclick="openWhatsAppMessage('New DPP uploaded: ${d.title} — ${d.pdf_link}')"><i class="fab fa-whatsapp"></i></button>
           </td>
         </tr>`).join('') : `<tr><td class="p-2 text-slate-400" colspan="3">No DPPs uploaded yet.</td></tr>`;
@@ -1034,6 +1033,7 @@
         const date = document.getElementById('dppDate').value || todayISO();
         const mode = [...document.getElementsByName('dppAttachMode')].find(r=>r.checked)?.value || 'link';
         let link = document.getElementById('dppLink').value.trim();
+        let storagePath = null;
         
         const saveBtn = event.target;
         saveBtn.disabled = true;
@@ -1043,12 +1043,19 @@
             if(mode==='upload'){
                 const f = document.getElementById('dppFile').files?.[0];
                 if (!f) { throw new Error('Please choose a file to upload.'); }
-                const url = await uploadToBucket(f, BUCKETS.dpps, activeSection);
-                if (url) link = url; else { throw new Error('File upload failed.'); }
+                const uploadResult = await uploadToBucket(f, BUCKETS.dpps, activeSection);
+                if (uploadResult) {
+                    link = uploadResult.publicUrl;
+                    storagePath = uploadResult.storagePath;
+                } else { 
+                    throw new Error('File upload failed.'); 
+                }
             }
             if(!link){ throw new Error('Provide a PDF link or upload a file.'); }
             
-            await insertDPPRow({ title, date, link: link, section: activeSection });
+            const { error } = await supabase.from('dpps').insert({ title, date, pdf_link: link, section: activeSection, storage_path: storagePath });
+            if (error) throw error;
+
             showNotification('DPP saved!');
             await showTeacherSection('dpps');
         } catch(e){ 
@@ -1058,6 +1065,30 @@
             saveBtn.innerHTML = `Save DPP`;
         }
     }
+    
+    // FIX: New function to handle deleting from storage and database
+    async function deleteDPP(id, storagePath) {
+        showConfirmation('Are you sure you want to delete this DPP?', async () => {
+            // First, delete the database record
+            const { error: dbError } = await supabase.from('dpps').delete().eq('id', id);
+            if (dbError) {
+                return showNotification(`Database delete failed: ${dbError.message}`);
+            }
+
+            // If there's a file in storage, delete it
+            if (storagePath) {
+                const { error: storageError } = await supabase.storage.from('dpps').remove([storagePath]);
+                if (storageError) {
+                    // Notify user but don't stop the process, as the DB entry is already gone
+                    showNotification(`Could not delete file from storage: ${storageError.message}`);
+                }
+            }
+            
+            showNotification('DPP deleted successfully.');
+            await showTeacherSection('dpps');
+        });
+    }
+
 
     async function renderStudentDPPsView(){
       const dpps = await fetchDPPsForSection(activeSection);
@@ -1470,8 +1501,13 @@
         let storage_path = null;
         if (!finalLink && fileEl.files && fileEl.files[0]){
             const f = fileEl.files[0];
-            const url = await uploadToBucket(f, BUCKETS.materials, activeSection);
-            if (url) finalLink = url; else throw new Error("File upload failed.");
+            const uploadResult = await uploadToBucket(f, BUCKETS.materials, activeSection);
+            if (uploadResult) {
+                finalLink = uploadResult.publicUrl;
+                storage_path = uploadResult.storagePath;
+            } else {
+                 throw new Error("File upload failed.");
+            }
         }
         if (!finalLink) throw new Error('Provide a link or upload a file.');
 
@@ -1997,13 +2033,17 @@
         const questionDiv = document.createElement('div');
         questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2';
         
-        const questionText = data?.question || '';
+        // FIX: Add fallback for missing question text
+        let questionText = data?.question || '';
+        if (!questionText && data?.options?.some(opt => opt)) {
+            questionText = `[AI did not generate a question. Please type the question here based on the options below.]`;
+        }
+        
         const type = data?.type || 'objective';
         const options = data?.options || ['', '', '', ''];
         const correctIndex = data?.correct_answer ?? -1;
         const sampleAnswer = data?.sample_answer || '';
 
-        // FIX: Changed question input to a textarea for better UX with longer questions.
         questionDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <p class="font-bold text-slate-400">Question ${questionCount}</p>
@@ -2061,6 +2101,7 @@
 
             if (type === 'objective') {
                 const options = [...qEl.querySelectorAll('.option-input')].map(opt => opt.value.trim());
+                // FIX: Correctly reference the dynamically created radio button name
                 const correctIndex = qEl.querySelector(`input[name="correct_q${qNum}"]:checked`)?.value;
 
                 if (options.some(o => !o)) {
@@ -2339,11 +2380,16 @@
             For multiple-choice questions, provide: question, 4 options, the 0-indexed correct answer, and type: "objective".
             For subjective questions, provide: question, a sample answer, and type: "subjective".`;
         }
-
+        
+        // FIX: Added stricter instruction to the prompt
         const prompt = `Generate ${numQuestions} questions for a coaching center test.
         Topic: ${topic}
         Difficulty: ${difficulty}
+        
         ${typeInstruction}
+
+        IMPORTANT: The "question" field for each object MUST be a non-empty string containing the full question text. Do not leave it blank.
+        
         Return the output as a JSON object with a single key "questions" which is an array of these question objects.`;
 
         try {
@@ -2466,8 +2512,9 @@
         try {
             let attachmentUrl = null;
             if (file) {
-                attachmentUrl = await uploadToBucket(file, BUCKETS.tests, activeSection);
-                if (!attachmentUrl) throw new Error("File upload failed.");
+                const uploadResult = await uploadToBucket(file, BUCKETS.tests, activeSection);
+                if (!uploadResult) throw new Error("File upload failed.");
+                attachmentUrl = uploadResult.publicUrl;
             }
 
             const { data: testData, error: testError } = await supabase
@@ -2583,4 +2630,3 @@
   </script>
 </body>
 </html>
-
