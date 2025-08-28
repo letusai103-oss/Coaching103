@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coaching Centre Portal — Supabase</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background:#0f172a; color:#e2e8f0; }
+    .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; justify-content:center; align-items:center; z-index:100; backdrop-filter:blur(5px); }
+    .modal-content{ background:#1e293b; padding:1.5rem; border-radius:1rem; box-shadow:0 10px 25px rgba(0,0,0,.5); width:90%; max-width:640px; max-height:90vh; overflow-y:auto; border:1px solid #334155; }
+    .dashboard-grid{ display:grid; grid-template-columns:1fr; min-height:100vh; }
+    @media (min-width:768px){ .dashboard-grid{ grid-template-columns:280px 1fr; } }
+    .sidebar{ background:#1e293b; padding:1rem; }
+    .content-area{ padding:1rem; overflow-y:auto; }
+    @media (min-width:768px){ .sidebar{ padding:2rem; } .content-area{ padding:2rem; } }
+    .btn{ padding:.75rem 1.25rem; border-radius:.5rem; font-weight:600; transition:all .2s; cursor:pointer; display:inline-flex; align-items:center; gap:.5rem; }
+    .btn:disabled{ background:#475569; cursor:not-allowed; opacity:.8; }
+    .btn-primary{ background:#4f46e5; color:#fff; } .btn-primary:hover:not(:disabled){ background:#4338ca; }
+    .btn-secondary{ background:#334155; color:#fff; } .btn-secondary:hover:not(:disabled){ background:#475569; }
+    .btn-danger{ background:#dc2626; color:#fff; } .btn-danger:hover:not(:disabled){ background:#b91c1c; }
+    .btn-whatsapp{ background:#25D366; color:#fff; } .btn-whatsapp:hover{ background:#1DAE53; }
+    .responsive-table{ width:100%; border-collapse:collapse; }
+    .responsive-table thead{ display:none; }
+    .responsive-table tr{ display:block; margin-bottom:1rem; border-radius:.5rem; background:#334155; padding:1rem; }
+    .responsive-table td{ display:block; text-align:right; position:relative; padding-left:50%; border-bottom:1px solid #475569; margin-bottom:.5rem; }
+    .responsive-table td:last-child{ border-bottom:none; margin-bottom:0; }
+    .responsive-table td::before{ content:attr(data-label); position:absolute; left:0; width:45%; padding-left:1rem; font-weight:600; text-align:left; color:#94a3b8; }
+    @media (min-width:768px){
+      .responsive-table thead{ display:table-header-group; }
+      .responsive-table tr{ display:table-row; margin:0; border-radius:0; background:none; padding:0; }
+      .responsive-table td{ display:table-cell; text-align:left; padding:1rem; border-bottom:1px solid #334155; }
+      .responsive-table td::before{ display:none; }
+    }
+    .chat-window{ height:60vh; display:flex; flex-direction:column; gap:1rem; overflow-y:auto; padding:1rem; background:#0f172a; border-radius:.5rem; }
+    .chat-bubble{ padding:.75rem 1rem; border-radius:1rem; max-width:80%; line-height:1.5; }
+    .chat-bubble.user{ background:#4f46e5; color:#fff; align-self:flex-end; border-bottom-right-radius:.25rem; }
+    .chat-bubble.assistant{ background:#334155; color:#e2e8f0; align-self:flex-start; border-bottom-left-radius:.25rem; }
+    .announcement-important{ border-left:4px solid #f87171; background:rgba(248,113,113,.1); }
+    .hl{ background: #fde047; color:#111827; padding:0 .15rem; border-radius:.2rem; }
+    
+    .login-box-animated {
+      position: relative;
+      overflow: hidden;
+    }
+    .login-box-animated::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 1rem;
+      padding: 2px;
+      background: linear-gradient(45deg, #4f46e5, #a855f7, #ec4899, #f59e0b);
+      background-size: 400% 400%;
+      animation: gradient-animation 5s ease infinite;
+      -webkit-mask: 
+         linear-gradient(#fff 0 0) content-box, 
+         linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      z-index: -1;
+    }
+    @keyframes gradient-animation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed inset-0 -z-10 h-full w-full bg-slate-950">
+    <div class="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+    <div class="absolute left-0 right-0 top-[-10%] h-[1000px] w-[1000px] rounded-full bg-[radial-gradient(circle_400px_at_50%_300px,#fbfbfb36,#0f172a)]"></div>
+  </div>
+  
+  <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
+    <div class="login-box-animated w-full max-w-md bg-slate-800/80 backdrop-blur-sm p-8 rounded-2xl shadow-2xl">
+      <h1 class="text-3xl font-bold text-center text-white mb-6">Coaching Centre Portal</h1>
+      <div class="space-y-4">
+        <select id="userTypeSelect" class="w-full bg-slate-700 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="parent">Parent</option>
+        </select>
+        <div id="teacherLoginFields" class="hidden space-y-4">
+          <input type="password" id="teacherPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Teacher PIN">
+          <button id="teacherLoginBtn" class="btn btn-primary w-full">Login as Teacher</button>
+        </div>
+        <div id="studentLoginFields" class="space-y-4">
+          <input type="password" id="studentPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Enter Your PIN">
+          <button id="studentLoginBtn" class="btn btn-primary w-full">Login as Student</button>
+        </div>
+        <div id="parentLoginFields" class="hidden space-y-4">
+          <input type="password" id="parentPinInput" class="w-full bg-slate-700 p-3 rounded-lg" placeholder="Enter Your Child's PIN">
+          <button id="parentLoginBtn" class="btn btn-primary w-full">Login as Parent</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="teacherDashboard" class="dashboard-grid hidden"></div>
+  <div id="studentDashboard" class="dashboard-grid hidden"></div>
+  <div id="parentDashboard" class="dashboard-grid hidden"></div>
+
+  <div id="notificationModal" class="modal-overlay">
+    <div class="modal-content text-center">
+      <p id="notificationText" class="text-lg mb-6"></p>
+      <button id="notificationCloseBtn" class="btn btn-primary">Close</button>
+    </div>
+  </div>
+
+  <div id="confirmationModal" class="modal-overlay">
+    <div class="modal-content text-center">
+      <p id="confirmationText" class="text-lg mb-6"></p>
+      <div class="flex justify-center gap-4">
+        <button id="confirmCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="confirmActionBtn" class="btn btn-danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reportModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Student Performance Report</h2>
+      <div id="reportContentContainer" class="bg-slate-900 p-4 rounded-lg max-h-[60vh] overflow-y-auto text-slate-300 space-y-4">
+        <div id="reportContent"></div>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2 mt-4">
+        <button id="reportCloseBtn" class="btn btn-secondary">Close</button>
+        <button id="downloadPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Download PDF</button>
+        <button id="sendReportWhatsAppBtn" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Send via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+    
+  <div id="aiPaperAnalyzerModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-magic text-indigo-400"></i>AI Paper Analyzer</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-slate-400 mb-1">Question</label>
+          <textarea id="aiAnalyzerQuestion" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="Paste the full question here..."></textarea>
+        </div>
+         <div>
+          <label class="block text-slate-400 mb-1">Model Answer / Grading Rubric</label>
+          <textarea id="aiAnalyzerModelAnswer" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="Paste the ideal answer or grading points..."></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Student's Answer</label>
+          <textarea id="aiAnalyzerAnswer" class="w-full bg-slate-900 p-2 rounded-lg h-40" placeholder="Paste the student's complete answer here..."></textarea>
+        </div>
+        <button id="aiAnalyzerBtn" class="btn btn-primary w-full">
+          <i class="fas fa-cogs"></i> Analyze with AI
+        </button>
+        <div class="text-slate-400 text-sm">
+            <h3 class="font-semibold text-white mb-2">Analysis Result:</h3>
+            <div id="aiAnalyzerResult" class="bg-slate-900 p-4 rounded-lg mt-2 min-h-[100px] whitespace-pre-wrap font-mono text-sm">Click "Analyze" to see feedback.</div>
+        </div>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button onclick="hideModal(document.getElementById('aiPaperAnalyzerModal'))" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editPerformanceModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Edit Student Performance</h2>
+      <p id="editStudentName" class="text-lg font-semibold mb-4"></p>
+      <div id="editPerformanceForm" class="space-y-4"></div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button id="editCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="editSaveBtn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editStudentDetailsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Edit Student Details</h2>
+      <div class="space-y-4">
+        <div><label class="block text-slate-400">Name</label><input type="text" id="editDetailName" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Roll Number</label><input type="text" id="editDetailRoll" class="w-full bg-slate-700 p-2 rounded-lg" disabled></div>
+        <div><label class="block text-slate-400">Parent's Phone</label><input type="text" id="editDetailParentPhone" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Student PIN</label><input type="text" id="editDetailStudentPin" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button id="editDetailCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="editDetailSaveBtn" class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="addStudentModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Add New Student</h2>
+      <div class="space-y-4">
+        <div><label class="block text-slate-400">Full Name</label><input type="text" id="addStudentName" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Batch</label>
+          <select id="addStudentSection" class="w-full bg-slate-700 p-2 rounded-lg"><option value="12A">12A</option><option value="12B">12B</option></select>
+        </div>
+        <div><label class="block text-slate-400">Roll (e.g., 12A-01)</label><input type="text" id="addStudentRoll" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Initial PIN</label><input type="text" id="addStudentPin" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Parent's Phone (10 digits)</label><input type="text" id="addStudentParentPhone" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="hideModal(document.getElementById('addStudentModal'))" class="btn btn-secondary">Cancel</button>
+        <button onclick="addStudent()" class="btn btn-primary">Add Student</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="changePinModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">Change Your PIN</h2>
+      <div class="space-y-4">
+        <div><label class="block text-slate-400">New PIN</label><input type="password" id="newPinInput" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Confirm New PIN</label><input type="password" id="confirmNewPinInput" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="hideModal(document.getElementById('changePinModal'))" class="btn btn-secondary">Cancel</button>
+        <button onclick="updateTeacherPin()" class="btn btn-primary">Update PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bulkReminderModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 id="bulkReminderTitle" class="text-2xl font-bold mb-4">Send Reminders</h2>
+      <p class="text-slate-400 mb-4">Click each link to open WhatsApp and send the pre-written message.</p>
+      <div id="bulkReminderList" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="hideModal(document.getElementById('bulkReminderModal'))" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailedAttendanceModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 id="detailedAttendanceTitle" class="text-2xl font-bold mb-4">Detailed Attendance History</h2>
+      <div id="detailedAttendanceContent" class="max-h-[60vh] overflow-y-auto"></div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="hideModal(document.getElementById('detailedAttendanceModal'))" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="marksEntryModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 id="marksModalTitle" class="text-2xl font-bold mb-4">Enter Marks</h2>
+        <p id="marksModalSubTitle" class="text-slate-400 mb-4"></p>
+        <div id="marksEntryForm" class="space-y-3 max-h-[50vh] overflow-y-auto pr-2"></div>
+        <div class="flex justify-end space-x-2 mt-6">
+            <button onclick="hideModal(document.getElementById('marksEntryModal'))" class="btn btn-secondary">Cancel</button>
+            <button id="marksSaveBtn" class="btn btn-primary">Save Marks</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="createTestModal" class="modal-overlay">
+      <div class="modal-content">
+          <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-magic text-indigo-400"></i>Create Online Test with AI</h2>
+          <div class="space-y-4">
+              <input id="onlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title (e.g., Physics - Chapter 4)">
+              <textarea id="onlineTestSyllabus" class="w-full bg-slate-700 p-2 rounded-lg h-24" placeholder="Enter Topic or Syllabus (e.g., Kinematics, vectors, calculus-based problems)"></textarea>
+              <div class="grid grid-cols-2 gap-4">
+                  <select id="onlineTestDifficulty" class="w-full bg-slate-700 p-2 rounded-lg">
+                      <option value="Easy">Easy</option>
+                      <option value="Medium" selected>Medium</option>
+                      <option value="Hard">Hard</option>
+                  </select>
+                  <input id="onlineTestNumQuestions" type="number" value="5" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Number of Questions">
+              </div>
+              <button id="generateQuestionsBtn" class="btn btn-primary w-full"><i class="fas fa-cogs"></i> Generate Questions with AI</button>
+              <div id="aiGenerationStatus" class="text-center text-slate-400 hidden"></div>
+              
+              <hr class="border-slate-600">
+
+              <h3 class="text-lg font-bold">Generated Questions (Editable)</h3>
+              <div id="questionsContainer" class="space-y-4 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
+                  <p class="text-slate-500 text-center p-4">Click "Generate Questions" to begin.</p>
+              </div>
+              <div class="flex gap-2">
+                  <button id="addQuestionBtn" class="btn btn-secondary"><i class="fas fa-plus"></i> Add MCQ</button>
+                  <button id="addSubjectiveQuestionBtn" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Subjective</button>
+              </div>
+          </div>
+          <div class="flex justify-end space-x-2 mt-6">
+              <button onclick="hideModal(document.getElementById('createTestModal'))" class="btn btn-secondary">Cancel</button>
+              <button id="saveOnlineTestBtn" class="btn btn-primary">Save Test</button>
+          </div>
+      </div>
+  </div>
+
+  <div id="takeTestModal" class="modal-overlay">
+      <div class="modal-content">
+          <h2 id="takeTestTitle" class="text-2xl font-bold mb-4">Online Test</h2>
+          <div id="takeTestQuestionsContainer" class="space-y-6"></div>
+          <div class="flex justify-end mt-6">
+              <button id="submitTestBtn" class="btn btn-primary">Submit Answers</button>
+          </div>
+      </div>
+  </div>
+
+  <div id="viewSubmissionsModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 800px;">
+          <h2 id="submissionsTitle" class="text-2xl font-bold mb-4">Test Submissions</h2>
+          <div id="submissionsContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div>
+          <div class="flex justify-end mt-6">
+              <button onclick="hideModal(document.getElementById('viewSubmissionsModal'))" class="btn btn-secondary">Close</button>
+          </div>
+      </div>
+  </div>
+
+
+  <script>
+    const SUPABASE_URL = "https://xukprmjdxdtisxqibvdb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1a3BybWpkeGR0aXN4cWlidmRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyOTIyMDcsImV4cCI6MjA3MTg2ODIwN30.g3RI8ZyqGNk7yCBsR5KBlNd9hiiZvQmYZhHCNzqZhp4";
+    const GEMINI_API_KEY = "AIzaSyA4eVhAfEHxCS_aUwas8ak4hR_B6IghHjE";
+
+    const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
+    const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
+    if (!__SUPABASE_URL || !__SUPABASE_ANON_KEY) {
+      console.warn('Supabase env missing.');
+    }
+    const supabase = window.supabase.createClient(__SUPABASE_URL, __SUPABASE_ANON_KEY);
+
+    const BUCKETS = { tests: 'tests', dpps: 'dpps', materials: 'materials' };
+    const sanitizeFilename = (name) => String(name||'').replace(/\s+/g,'-').replace(/[^a-zA-Z0-9._-]/g,'').toLowerCase();
+    
+    async function uploadToBucket(file, bucket, section){
+      try{
+        if(!file) throw new Error('No file selected');
+        const path = `${section}/${Date.now()}-${sanitizeFilename(file.name)}`;
+        const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: pub } = await supabase.storage.from(bucket).getPublicUrl(path);
+        if (!pub?.publicUrl) throw new Error('Could not resolve public URL');
+        return pub.publicUrl;
+      } catch (e){
+        showNotification(`Upload error: ${e.message}. Please check Supabase bucket setup.`);
+        return null;
+      }
+    }
+
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    let selectedAttendanceDate = todayISO();
+    let teacherSearchQuery = "";
+    let loggedInUserType = null;
+    let loggedInEntity = null;
+    let activeSection = '12A';
+    let chartInstances = {};
+
+    const loginPage = document.getElementById('loginPage');
+    const teacherDashboard = document.getElementById('teacherDashboard');
+    const studentDashboard = document.getElementById('studentDashboard');
+    const parentDashboard = document.getElementById('parentDashboard');
+    const notificationModal = document.getElementById('notificationModal');
+    const confirmationModal = document.getElementById('confirmationModal');
+    const reportModal = document.getElementById('reportModal');
+    const aiPaperAnalyzerModal = document.getElementById('aiPaperAnalyzerModal');
+    const editPerformanceModal = document.getElementById('editPerformanceModal');
+    const editStudentDetailsModal = document.getElementById('editStudentDetailsModal');
+    const addStudentModal = document.getElementById('addStudentModal');
+    const changePinModal = document.getElementById('changePinModal');
+    const bulkReminderModal = document.getElementById('bulkReminderModal');
+    const detailedAttendanceModal = document.getElementById('detailedAttendanceModal');
+    const marksEntryModal = document.getElementById('marksEntryModal');
+    const createTestModal = document.getElementById('createTestModal');
+    const takeTestModal = document.getElementById('takeTestModal');
+    const viewSubmissionsModal = document.getElementById('viewSubmissionsModal');
+
+    const showModal = (m) => m.style.display = 'flex';
+    const hideModal = (m) => m.style.display = 'none';
+    const showNotification = (msg) => {
+      document.getElementById('notificationText').innerText = msg;
+      showModal(notificationModal);
+    };
+    document.getElementById('notificationCloseBtn').onclick = () => hideModal(notificationModal);
+    const showConfirmation = (message, onConfirm) => {
+      document.getElementById('confirmationText').innerText = message;
+      const btn = document.getElementById('confirmActionBtn');
+      const clone = btn.cloneNode(true);
+      btn.parentNode.replaceChild(clone, btn);
+      clone.onclick = () => { onConfirm(); hideModal(confirmationModal); };
+      document.getElementById('confirmCancelBtn').onclick = () => hideModal(confirmationModal);
+      showModal(confirmationModal);
+    };
+
+    const sendWhatsAppDeepLink = (phone, message) => {
+      if (!phone) { showNotification("Phone number is not available."); return; }
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
+    };
+    const openWhatsAppMessage = (message) => {
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
+    };
+    
+    const formatPhoneNumber = (phone) => {
+        const cleaned = (phone || '').replace(/\D/g, '');
+        if (cleaned.length === 10) return `+91${cleaned}`;
+        if (cleaned.length === 12 && cleaned.startsWith('91')) return `+${cleaned}`;
+        return phone;
+    };
+
+    document.getElementById('userTypeSelect').addEventListener('change', (e) => {
+      ['teacherLoginFields','studentLoginFields','parentLoginFields'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      document.getElementById(`${e.target.value}LoginFields`).classList.remove('hidden');
+    });
+
+    document.getElementById('teacherLoginBtn').addEventListener('click', async () => {
+      const pin = document.getElementById('teacherPinInput').value.trim();
+      if (!pin) return showNotification('Please enter PIN.');
+      let { data, error } = await supabase.from('teachers').select('*').eq('teacher_pin', pin).limit(1);
+      if (!error && (!data || data.length===0)){
+        ({ data, error } = await supabase.from('teachers').select('*').eq('pin', pin).limit(1));
+      }
+      if (error) return showNotification(`Login failed: ${error.message}`);
+      if (!data || data.length === 0) return showNotification('Invalid PIN.');
+      loggedInUserType = 'teacher';
+      loggedInEntity = data[0];
+      activeSection = loggedInEntity.section;
+      loginPage.classList.add('hidden');
+      await renderTeacherDashboard();
+      teacherDashboard.classList.remove('hidden');
+    });
+
+    document.getElementById('studentLoginBtn').addEventListener('click', async () => {
+      const pin = document.getElementById('studentPinInput').value.trim();
+      if (!pin) return showNotification('Please enter your PIN.');
+      const { data, error } = await supabase.from('students').select('*').eq('student_pin', pin).limit(1);
+      if (error) return showNotification(`Login failed: ${error.message}`);
+      if (!data || data.length === 0) return showNotification('Invalid PIN.');
+      loggedInUserType = 'student';
+      loggedInEntity = data[0];
+      activeSection = loggedInEntity.section;
+      loginPage.classList.add('hidden');
+      await renderStudentDashboard();
+      studentDashboard.classList.remove('hidden');
+    });
+
+    document.getElementById('parentLoginBtn').addEventListener('click', async () => {
+      const pin = document.getElementById('parentPinInput').value.trim();
+      if (!pin) return showNotification("Please enter your child's PIN.");
+      const { data, error } = await supabase.from('students').select('*').eq('student_pin', pin).limit(1);
+      if (error) return showNotification(`Login failed: ${error.message}`);
+      if (!data || data.length === 0) return showNotification('Child not found with this PIN.');
+      loggedInUserType = 'parent';
+      loggedInEntity = data[0];
+      activeSection = loggedInEntity.section;
+      loginPage.classList.add('hidden');
+      await renderParentDashboard();
+      parentDashboard.classList.remove('hidden');
+    });
+
+    const logout = () => {
+      loggedInUserType = null;
+      loggedInEntity = null;
+      [teacherDashboard, studentDashboard, parentDashboard].forEach(d => d.classList.add('hidden'));
+      loginPage.classList.remove('hidden');
+    };
+
+    document.getElementById('aiAnalyzerBtn').addEventListener('click', async () => {
+        const question = document.getElementById('aiAnalyzerQuestion').value.trim();
+        const answer = document.getElementById('aiAnalyzerAnswer').value.trim();
+        const modelAnswer = document.getElementById('aiAnalyzerModelAnswer').value.trim();
+        const resultDiv = document.getElementById('aiAnalyzerResult');
+        const analyzeBtn = document.getElementById('aiAnalyzerBtn');
+        if (!question || !answer) {
+            resultDiv.textContent = 'Please provide both a question and a student answer.';
+            return;
+        }
+        analyzeBtn.disabled = true;
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        
+        const prompt = `
+            You are an expert teacher's assistant. Your task is to analyze a student's answer for a given question based on a model answer.
+            Provide a detailed, constructive analysis in three parts:
+            1.  **Overall Score:** Give a score out of 10.
+            2.  **Strengths:** Point out what the student did well, comparing their answer to the model answer.
+            3.  **Areas for Improvement:** Suggest specific ways the student can improve their answer to be closer to the model answer. Be encouraging.
+
+            **Question:**\n${question}\n\n
+            **Model Answer/Rubric:**\n${modelAnswer || 'Not provided. Evaluate based on general correctness.'}\n\n
+            **Student's Answer:**\n${answer}`;
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${errorData.error.message}`);
+            }
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            resultDiv.textContent = text;
+        } catch (e) {
+            resultDiv.textContent = `An error occurred: ${e.message}. Please check your API key and network connection.`;
+        } finally {
+            analyzeBtn.disabled = false;
+        }
+    });
+
+    const renderSidebar = (user, sections) => {
+      let welcome = '';
+      if (user.type === 'teacher') welcome = `Welcome, ${user.entity.name}`;
+      if (user.type === 'student') welcome = `Hello, ${user.entity.name}`;
+      if (user.type === 'parent') welcome = `For ${user.entity.name}`;
+      return `
+        <div class="sidebar flex flex-col h-full">
+          <div>
+            <h2 class="text-2xl font-bold text-white">${user.title}</h2>
+            <p class="text-slate-400 mb-6">${welcome}</p>
+          </div>
+          <nav class="flex-grow space-y-2">
+            ${sections.map(s => `<button class="w-full text-left p-3 rounded-lg hover:bg-slate-700 transition sidebar-btn" data-section="${s.id}">${s.icon} ${s.name}</button>`).join('')}
+          </nav>
+          <div>
+            <button onclick="logout()" class="w-full text-left p-3 rounded-lg hover:bg-red-500/20 text-red-400 transition">
+              <i class="fas fa-sign-out-alt fa-fw mr-2"></i>Logout
+            </button>
+          </div>
+        </div>`;
+    };
+    const renderContentArea = (user) => `
+      <div class="content-area">
+        <div class="flex justify-between items-center mb-6">
+          <h1 id="${user.type}SectionTitle" class="text-3xl font-bold text-white"></h1>
+          <div id="${user.type}HeaderControls"></div>
+        </div>
+        <div id="${user.type}Content" class="space-y-6"></div>
+      </div>`;
+    const attachSidebarListeners = (who) => {
+      const root = who==='teacher'? teacherDashboard : who==='student'? studentDashboard : parentDashboard;
+      root.querySelectorAll('.sidebar-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          root.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('bg-slate-700'));
+          btn.classList.add('bg-slate-700');
+          if (who==='teacher') showTeacherSection(btn.dataset.section);
+          if (who==='student') showStudentSection(btn.dataset.section);
+          if (who==='parent')  showParentSection(btn.dataset.section);
+        });
+      });
+    };
+
+    async function renderTeacherDashboard(){
+      const user = { type:'teacher', title:'Teacher Dashboard', entity: loggedInEntity };
+      let sections = [
+        { id:'home', name:'Dashboard', icon:'<i class="fas fa-home fa-fw mr-2"></i>' },
+        { id:'details', name:'Student Details', icon:'<i class="fas fa-user-edit fa-fw mr-2"></i>' },
+        { id:'performance', name:'Performance', icon:'<i class="fas fa-chart-line fa-fw mr-2"></i>' },
+        { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
+        { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
+        { id:'attendance', name:'Attendance', icon:'<i class="fas fa-user-check fa-fw mr-2"></i>' },
+        { id:'fees', name:'Fees', icon:'<i class="fas fa-dollar-sign fa-fw mr-2"></i>' },
+        { id:'materials', name:'Materials', icon:'<i class="fas fa-book fa-fw mr-2"></i>' },
+        { id:'timetable', name:'Timetable', icon:'<i class="fas fa-calendar-alt fa-fw mr-2"></i>' },
+        { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bullhorn fa-fw mr-2"></i>' },
+        { id:'ai_analyzer', name:'AI Paper Analyzer', icon:'<i class="fas fa-magic fa-fw mr-2"></i>' },
+        { id:'settings', name:'Settings', icon:'<i class="fas fa-cog fa-fw mr-2"></i>' },
+      ];
+      if (!loggedInEntity.is_fee_manager) {
+        sections = sections.filter(s=>s.id!=='fees');
+      }
+      teacherDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
+      attachSidebarListeners('teacher');
+      await showTeacherSection('home');
+    }
+
+    async function showTeacherSection(sectionId){
+      const titleEl = document.getElementById('teacherSectionTitle');
+      const contentEl = document.getElementById('teacherContent');
+      const controlsEl = document.getElementById('teacherHeaderControls');
+      
+      Object.values(chartInstances).forEach(chart => chart.destroy());
+      chartInstances = {};
+
+      controlsEl.innerHTML = `
+        <div class="flex items-center gap-2">
+          <label for="sectionSelect" class="text-slate-400">Batch:</label>
+          <select id="sectionSelect" class="bg-slate-700 p-2 rounded-lg text-white">
+            ${['12A','12B'].map(s=>`<option value="${s}" ${s===activeSection?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>`;
+      const sectionSelect = document.getElementById('sectionSelect');
+      if (sectionSelect){
+        sectionSelect.onchange = (e)=>{ activeSection = e.target.value; showTeacherSection(sectionId); };
+      }
+
+      switch(sectionId){
+        case 'home': titleEl.innerText='Dashboard Overview'; contentEl.innerHTML= await renderTeacherHome(); break;
+        case 'details': titleEl.innerText='Student Details'; contentEl.innerHTML= await renderStudentDetailsTable(); break;
+        case 'performance': titleEl.innerText='Student Performance'; contentEl.innerHTML= await renderPerformanceTable(); break;
+        case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderOnlineTestsManager(); break;
+        case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderDPPsManager(); break;
+        case 'attendance': titleEl.innerText='Mark Attendance'; contentEl.innerHTML= await renderAttendanceTable(); break;
+        case 'fees': if (loggedInEntity.is_fee_manager){ titleEl.innerText='Manage Fees'; contentEl.innerHTML= await renderFeesTable(); } break;
+        case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML= await renderMaterialsManager(); break;
+        case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML= await renderTimetableManager(); break;
+        case 'announcements': titleEl.innerText='Post Announcements'; contentEl.innerHTML= await renderAnnouncementsManager(); break;
+        case 'ai_analyzer': titleEl.innerText='AI Paper Analyzer'; contentEl.innerHTML= `<div class="bg-slate-800 p-4 rounded-lg"><p>Evaluate student answers with the power of AI. Click the button to open the standalone analyzer tool.</p><button class="btn btn-primary mt-4" onclick="showModal(aiPaperAnalyzerModal)">Open AI Paper Analyzer</button></div>`; break;
+        case 'settings': titleEl.innerText='Settings'; contentEl.innerHTML= renderTeacherSettings(); break;
+        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+      }
+    }
+
+    async function renderTeacherHome(){
+        const { data: students = [] } = await supabase.from('students').select('roll, name, fee_status').eq('section', activeSection);
+        const { data: perf = [] } = await supabase.from('performance').select('student_roll, score, test_id');
+        const { data: tests = [] } = await supabase.from('tests').select('id, total_marks').eq('section', activeSection);
+        const testsMap = new Map(tests.map(t => [t.id, t.total_marks]));
+
+        const studentData = students.map(s => {
+            const studentScores = perf.filter(p => p.student_roll === s.roll && p.score !== null);
+            let totalPercentage = 0;
+            let scoredTests = 0;
+            studentScores.forEach(p => {
+                const totalMarks = testsMap.get(p.test_id);
+                if (totalMarks > 0) {
+                    totalPercentage += (p.score / totalMarks) * 100;
+                    scoredTests++;
+                }
+            });
+            const avgPercentage = scoredTests > 0 ? (totalPercentage / scoredTests) : 0;
+            return { ...s, avgPercentage };
+        });
+
+        studentData.sort((a, b) => b.avgPercentage - a.avgPercentage);
+
+        const topPerformers = studentData.slice(0, 5);
+        const attentionNeeded = studentData.filter(s => s.avgPercentage < 50 && s.avgPercentage > 0).slice(-5).reverse();
+
+        const totalStudents = students.length;
+        const feesDue = students.filter(s => s.fee_status !== 'paid').length;
+        
+        const scoreBrackets = { '>90%': 0, '75-90%': 0, '50-75%': 0, '<50%': 0 };
+        studentData.forEach(s => {
+            if (s.avgPercentage > 90) scoreBrackets['>90%']++;
+            else if (s.avgPercentage >= 75) scoreBrackets['75-90%']++;
+            else if (s.avgPercentage >= 50) scoreBrackets['50-75%']++;
+            else if (s.avgPercentage > 0) scoreBrackets['<50%']++;
+        });
+
+        setTimeout(() => {
+            const ctx = document.getElementById('classPerfChart')?.getContext('2d');
+            if (ctx) {
+                chartInstances.classPerfChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(scoreBrackets),
+                        datasets: [{
+                            label: 'Number of Students',
+                            data: Object.values(scoreBrackets),
+                            backgroundColor: ['#4ade80', '#86efac', '#facc15', '#f87171'],
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } }, x: { ticks: { color: '#94a3b8' } } }
+                    }
+                });
+            }
+        }, 0);
+
+        return `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-slate-800 p-4 rounded-lg text-center"><h3 class="text-lg font-bold text-indigo-400">Total Students</h3><p class="text-4xl font-bold mt-2">${totalStudents}</p></div>
+                <div class="bg-slate-800 p-4 rounded-lg text-center"><h3 class="text-lg font-bold text-yellow-400">Fees Due</h3><p class="text-4xl font-bold mt-2">${feesDue}</p></div>
+                <div class="bg-slate-800 p-4 rounded-lg text-center col-span-1 md:col-span-2 lg:col-span-2">
+                    <h3 class="text-lg font-bold text-center mb-2 text-cyan-400">Class Performance Distribution</h3>
+                    <canvas id="classPerfChart" style="max-height: 120px;"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-xl font-bold mb-3 text-green-400 flex items-center"><i class="fas fa-trophy mr-2"></i>Top Performers</h3>
+                    <ul class="space-y-2">
+                        ${topPerformers.map(s => `
+                            <li class="flex justify-between items-center bg-slate-700/50 p-2 rounded">
+                                <span>${s.name}</span>
+                                <span class="font-bold text-green-300">${s.avgPercentage.toFixed(1)}%</span>
+                            </li>`).join('') || '<p class="text-slate-400">No performance data yet.</p>'}
+                    </ul>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-xl font-bold mb-3 text-red-400 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>Needs Attention (&lt;50%)</h3>
+                    <ul class="space-y-2">
+                        ${attentionNeeded.map(s => `
+                            <li class="flex justify-between items-center bg-slate-700/50 p-2 rounded">
+                                <span>${s.name}</span>
+                                <span class="font-bold text-red-300">${s.avgPercentage.toFixed(1)}%</span>
+                            </li>`).join('') || '<p class="text-slate-400">No students in this category.</p>'}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    const debounce = (fn,ms)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+    function highlight(text,q){
+      if(!q) return text;
+      const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return text.replace(new RegExp(`(^|\\W)(${esc})`,'ig'), (m,p1,p2)=>`${p1}<span class="hl">${p2}</span>`);
+    }
+    async function renderStudentDetailsTable(){
+      const q = teacherSearchQuery.trim().toLowerCase();
+      const { data: all = [], error } = await supabase.from('students').select('*').eq('section', activeSection).order('roll');
+      if (error){ return `<p class="text-red-400">Error: ${error.message}</p>`; }
+
+      const ranked = q
+        ? all.map(s=>{
+            const n = s.name.toLowerCase(); const r = s.roll.toLowerCase();
+            const score = (n.startsWith(q)?3:0) + (r.startsWith(q)?3:0) + (n.includes(q)?1:0) + (r.includes(q)?1:0);
+            return { ...s, __score:score };
+          }).filter(s=>s.__score>0).sort((a,b)=> b.__score - a.__score || a.name.localeCompare(b.name))
+        : all;
+
+      setTimeout(()=>{
+        const inp = document.getElementById('teacherSearchInput');
+        if (inp) inp.addEventListener('input', debounce((e)=>{ teacherSearchQuery = e.target.value; showTeacherSection('details'); },200));
+      },0);
+
+      const rows = ranked.map(s=>`
+        <tr>
+          <td data-label="Name">${highlight(s.name, q)}</td>
+          <td data-label="Roll No">${highlight(s.roll, q)}</td>
+          <td data-label="Parent Phone">${s.parent_phone || ''}</td>
+          <td data-label="Fee"><span class="px-2 py-1 rounded-full text-xs font-semibold ${s.fee_status==='paid'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}">${s.fee_status||'due'}</span></td>
+          <td data-label="Actions" class="space-x-2">
+            <button onclick="openStudentDetailsEdit('${s.roll}')" class="btn btn-secondary text-sm"><i class="fas fa-user-edit"></i></button>
+            <button onclick="deleteStudent('${s.roll}')" class="btn btn-danger text-sm"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`).join('');
+
+      return `
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <button onclick="showModal(addStudentModal)" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add New Student</button>
+          <div class="flex-grow flex items-center gap-2">
+            <i class="fas fa-search text-slate-400"></i>
+            <input id="teacherSearchInput" class="bg-slate-700 p-2 rounded-lg text-white w-full md:w-auto" placeholder="Search by name or roll..." value="${teacherSearchQuery}">
+          </div>
+          ${q ? `<span class="text-slate-400 text-sm">Showing ${ranked.length} of ${all.length}</span>` : ''}
+        </div>
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <table class="responsive-table">
+            <thead><tr><th>Name</th><th>Roll No</th><th>Parent's Phone</th><th>Fee</th><th>Actions</th></tr></thead>
+            <tbody>${rows || '<tr><td class="p-2 text-slate-400" colspan="5">No students in this batch.</td></tr>'}</tbody>
+          </table>
+        </div>`;
+    }
+
+    async function addStudent(){
+      const name = document.getElementById('addStudentName').value.trim();
+      const section = document.getElementById('addStudentSection').value;
+      const roll = document.getElementById('addStudentRoll').value.trim();
+      const pin = document.getElementById('addStudentPin').value.trim();
+      const rawPhone = document.getElementById('addStudentParentPhone').value.trim();
+      const parentPhone = formatPhoneNumber(rawPhone);
+
+      if (!name || !roll || !pin) return showNotification('Name, Roll, and PIN are required.');
+      const { error } = await supabase.from('students').insert({ name, section, roll, student_pin: pin, parent_phone: parentPhone || null, fee_status:'due' });
+      if (error) return showNotification(`Could not add student: ${error.message}`);
+      hideModal(addStudentModal);
+      showNotification('Student added!');
+      await showTeacherSection('details');
+    }
+
+    let editStudentRollGlobal = null;
+    async function openStudentDetailsEdit(roll){
+      const { data, error } = await supabase.from('students').select('*').eq('roll', roll).limit(1);
+      if (error || !data || data.length===0) return showNotification('Student not found.');
+      const s = data[0];
+      document.getElementById('editDetailName').value = s.name;
+      document.getElementById('editDetailRoll').value = s.roll;
+      document.getElementById('editDetailParentPhone').value = s.parent_phone || '';
+      document.getElementById('editDetailStudentPin').value = s.student_pin || '';
+      editStudentRollGlobal = s.roll;
+      showModal(editStudentDetailsModal);
+    }
+    document.getElementById('editDetailCancelBtn').onclick = ()=> hideModal(editStudentDetailsModal);
+    document.getElementById('editDetailSaveBtn').onclick = async ()=>{
+      if (!editStudentRollGlobal) return;
+      const name = document.getElementById('editDetailName').value.trim();
+      const rawPhone = document.getElementById('editDetailParentPhone').value.trim();
+      const parentPhone = formatPhoneNumber(rawPhone);
+      const studentPin = document.getElementById('editDetailStudentPin').value.trim();
+      if (!studentPin) return showNotification("Student PIN cannot be empty.");
+      
+      const { error } = await supabase.from('students').update({ name, parent_phone: parentPhone || null, student_pin: studentPin }).eq('roll', editStudentRollGlobal);
+      if (error) return showNotification(`Update failed: ${error.message}`);
+      hideModal(editStudentDetailsModal);
+      showNotification('Student updated');
+      await showTeacherSection('details');
+    };
+
+    async function deleteStudent(roll){
+      showConfirmation(`Delete ${roll}?`, async () => {
+        const { error } = await supabase.from('students').delete().eq('roll', roll);
+        if (error) return showNotification(`Delete failed: ${error.message}`);
+        showNotification('Deleted');
+        await showTeacherSection('details');
+      });
+    }
+
+    async function fetchDPPsForSection(section){
+      const { data = [], error } = await supabase.from('dpps')
+        .select('id, title, date, pdf_link, created_at, section')
+        .eq('section', section).order('created_at', { ascending:false }).order('id', { ascending:false });
+      if (error) { console.error("Error fetching DPPs:", error); return []; }
+      return data;
+    }
+    async function insertDPPRow({ title, date, link, section }){
+      const { error } = await supabase.from('dpps').insert({ title, date, pdf_link: link, section });
+      if (error) throw error;
+    }
+    async function renderDPPsManager(){
+      const dpps = await fetchDPPsForSection(activeSection);
+      setTimeout(() => {
+        const radios = document.getElementsByName('dppAttachMode');
+        radios.forEach?.(r => r.addEventListener('change', () => {
+          document.getElementById('dppLinkWrap').classList.toggle('hidden', r.value!=='link' || !r.checked);
+          document.getElementById('dppFileWrap').classList.toggle('hidden', r.value!=='upload' || !r.checked);
+        }));
+      }, 0);
+      const rows = dpps.length ? dpps.map(d => `
+        <tr>
+          <td data-label="Title">${d.title}</td>
+          <td data-label="Date">${(d.date||'').slice(0,10)}</td>
+          <td data-label="Actions" class="flex flex-wrap gap-2">
+            <a href="${d.pdf_link}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-eye"></i></a>
+            <button class="btn btn-danger text-sm" onclick="showConfirmation('Delete this DPP?', async()=>{ await supabase.from('dpps').delete().eq('id', ${d.id}); showNotification('DPP deleted'); showTeacherSection('dpps'); })"><i class="fas fa-trash"></i></button>
+            <button class="btn btn-whatsapp text-sm" onclick="openWhatsAppMessage('New DPP uploaded: ${d.title} — ${d.pdf_link}')"><i class="fab fa-whatsapp"></i></button>
+          </td>
+        </tr>`).join('') : `<tr><td class="p-2 text-slate-400" colspan="3">No DPPs uploaded yet.</td></tr>`;
+      const today = new Date().toISOString().slice(0,10);
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg space-y-4">
+          <div class="grid gap-2">
+            <input id="dppTitle" class="bg-slate-700 p-2 rounded-lg" placeholder="DPP Title (required)">
+            <input id="dppDate" type="date" class="bg-slate-700 p-2 rounded-lg" value="${today}">
+            <div class="flex items-center gap-4 text-sm text-slate-300">
+              <label><input type="radio" name="dppAttachMode" value="link" checked> Paste PDF link</label>
+              <label><input type="radio" name="dppAttachMode" value="upload"> Upload from device</label>
+            </div>
+            <div id="dppLinkWrap"><input id="dppLink" class="bg-slate-700 p-2 rounded-lg w-full" placeholder="https://...pdf"></div>
+            <div id="dppFileWrap" class="hidden"><input id="dppFile" type="file" class="w-full text-sm text-slate-400"></div>
+            <button class="btn btn-primary mt-2" onclick="(async ()=>{
+              const title = document.getElementById('dppTitle').value.trim();
+              if(!title){ showNotification('DPP Title is required'); return; }
+              const date = document.getElementById('dppDate').value || '${today}';
+              const mode = [...document.getElementsByName('dppAttachMode')].find(r=>r.checked)?.value || 'link';
+              let link = document.getElementById('dppLink').value.trim();
+              if(mode==='upload'){
+                const f = document.getElementById('dppFile').files?.[0];
+                if (!f) { showNotification('Please choose a file to upload.'); return; }
+                const url = await uploadToBucket(f, BUCKETS.dpps, activeSection);
+                if (url) link = url; else return;
+              }
+              if(!link){ showNotification('Provide a PDF link or upload a file.'); return; }
+              try{
+                await insertDPPRow({ title, date, link: link, section: activeSection });
+                showNotification('DPP saved!');
+                showTeacherSection('dpps');
+              } catch(e){ showNotification('Save failed: ' + e.message); }
+            })()">Save DPP</button>
+          </div>
+          <h3 class="text-xl font-bold border-t border-slate-700 pt-4">DPPs (Newest first)</h3>
+          <div class="overflow-x-auto">
+            <table class="responsive-table">
+              <thead><tr><th>Title</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+    async function renderStudentDPPsView(){
+      const dpps = await fetchDPPsForSection(activeSection);
+      return `
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <table class="responsive-table">
+            <thead><tr><th>Title</th><th>Date</th><th>Download</th></tr></thead>
+            <tbody>
+              ${dpps.length ? dpps.map(d=>`
+                <tr>
+                  <td data-label="Title">${d.title}</td>
+                  <td data-label="Date">${(d.date||'').slice(0,10)}</td>
+                  <td data-label="Download"><a href="${d.pdf_link}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-download"></i></a></td>
+                </tr>`).join('') : '<tr><td class="p-2 text-slate-400" colspan="3">No DPPs yet.</td></tr>'}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    async function openMarksEntryModal(testId, testName, totalMarks) {
+        document.getElementById('marksModalTitle').innerText = `Enter Marks for: ${testName}`;
+        document.getElementById('marksModalSubTitle').innerText = `Total Marks: ${totalMarks || 'N/A'}`;
+        const form = document.getElementById('marksEntryForm');
+        form.innerHTML = '<p class="text-slate-400">Loading students...</p>';
+
+        const { data: students, error: stuError } = await supabase.from('students').select('roll, name').eq('section', activeSection).order('roll');
+        if (stuError) {
+            form.innerHTML = '<p class="text-red-400">Could not load students.</p>';
+            return;
+        }
+
+        const { data: performance, error: perfError } = await supabase.from('performance').select('student_roll, score').eq('test_id', testId);
+        const scoresMap = new Map((performance || []).map(p => [p.student_roll, p.score]));
+
+        form.innerHTML = students.map(s => `
+            <div class="grid grid-cols-3 items-center gap-2">
+                <label class="col-span-2 text-slate-300 truncate" for="score-${s.roll}">${s.name} (${s.roll})</label>
+                <input type="number" id="score-${s.roll}" class="col-span-1 bg-slate-700 p-2 rounded-lg w-full" 
+                       placeholder="Score" value="${scoresMap.get(s.roll) ?? ''}" data-roll="${s.roll}">
+            </div>
+        `).join('');
+        
+        const saveBtn = document.getElementById('marksSaveBtn');
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.onclick = () => saveMarks(testId);
+
+        showModal(marksEntryModal);
+    }
+
+    async function saveMarks(testId) {
+        const inputs = document.querySelectorAll('#marksEntryForm input[data-roll]');
+        const upserts = [];
+        inputs.forEach(input => {
+            const roll = input.dataset.roll;
+            const score = input.value === '' ? null : Number(input.value);
+            upserts.push({
+                student_roll: roll,
+                test_id: testId,
+                teacher_id: loggedInEntity.id,
+                subject: loggedInEntity.subject,
+                score: score
+            });
+        });
+
+        if (upserts.length > 0) {
+            const { error } = await supabase.from('performance').upsert(upserts, { onConflict: 'student_roll, test_id' });
+            if (error) {
+                showNotification(`Error saving marks: ${error.message}`);
+            } else {
+                showNotification('Marks saved successfully!');
+                hideModal(marksEntryModal);
+            }
+        }
+    }
+
+    let teacherSelectedTestId = 'all';
+    async function renderPerformanceTable(){
+      const [{ data: students=[] }, { data: teachers=[] }, { data: perf=[] }, {data: tests = []}, { data: attendance = [] }] = await Promise.all([
+        supabase.from('students').select('roll,name').eq('section', activeSection).order('roll'),
+        supabase.from('teachers').select('id,name,subject').eq('section', activeSection),
+        supabase.from('performance').select('id,student_roll, teacher_id, subject, score, test_id'),
+        supabase.from('online_tests').select('id, title'),
+        supabase.from('attendance').select('student_roll, status').eq('teacher_id', loggedInEntity.id)
+      ]);
+      const teacherMap = new Map(teachers.map(t=>[t.id, t]));
+      const byStudent = new Map(students.map(s=>[s.roll, { ...s, perf:[], attendance: { P: 0, A: 0 } }]));
+
+      attendance.forEach(att => {
+        if (byStudent.has(att.student_roll)) {
+            if (att.status === 'P') byStudent.get(att.student_roll).attendance.P++;
+            else if (att.status === 'A') byStudent.get(att.student_roll).attendance.A++;
+        }
+      });
+      
+      for (const row of perf){
+        if (teacherSelectedTestId !== 'all' && row.test_id !== Number(teacherSelectedTestId)) continue;
+        if (byStudent.has(row.student_roll)) byStudent.get(row.student_roll).perf.push(row);
+      }
+
+      if (students.length===0) return '<p>No students in this batch.</p>';
+      const testOptions = `<option value="all">All tests</option>` + tests.map(t=>`<option value="${t.id}" ${String(t.id)===String(teacherSelectedTestId)?'selected':''}>${t.title}</option>`).join('');
+      
+      const header = `
+        <div class="bg-slate-800 p-4 rounded-lg mb-4 grid gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-slate-400">Select Test:</label>
+            <select id="teacherTestFilter" class="bg-slate-700 p-2 rounded-lg text-white">${testOptions}</select>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div class="bg-slate-900 p-4 rounded-lg">
+                  <h3 class="text-lg font-bold text-center mb-2">Overall Attendance</h3>
+                  <canvas id="overallAttendanceChart"></canvas>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-lg">
+                  <h3 class="text-lg font-bold text-center mb-2">Test Performance Overview</h3>
+                  <canvas id="overallMarksChart"></canvas>
+              </div>
+          </div>
+        </div>`;
+        
+      const body = `
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <table class="responsive-table">
+            <thead><tr><th>Name</th><th>Roll</th><th>Performance</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${[...byStudent.values()].map(s=>`
+                <tr>
+                  <td data-label="Name">${s.name}</td>
+                  <td data-label="Roll">${s.roll}</td>
+                  <td data-label="Performance">
+                    <ul class="list-disc list-inside">
+                      ${s.perf.map(p=>{
+                        const t = teacherMap.get(p.teacher_id);
+                        const tName = t? t.name.split(' ')[0] : '—';
+                        return `<li>${p.subject} (${tName}): ${p.score ?? '—'}</li>`;
+                      }).join('') || '<li class="text-slate-400">No scores</li>'}
+                    </ul>
+                  </td>
+                  <td data-label="Actions" class="flex flex-wrap gap-2">
+                    <button onclick="openPerformanceEdit('${s.roll}')" class="btn btn-secondary text-sm"><i class="fas fa-edit"></i></button>
+                    <button onclick="openPerformanceReport('${s.roll}', false)" class="btn btn-secondary text-sm" title="Detailed Report"><i class="fas fa-file-alt"></i></button>
+                    <button onclick="openPerformanceReport('${s.roll}', true)" class="btn btn-secondary text-sm" title="Summary Report"><i class="fas fa-compress-arrows-alt"></i></button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+
+      setTimeout(()=>{
+        const sel = document.getElementById('teacherTestFilter');
+        if (sel) sel.onchange = (e)=>{ teacherSelectedTestId = e.target.value || 'all'; showTeacherSection('performance'); };
+        
+        const totalPresent = [...byStudent.values()].reduce((acc, s) => acc + s.attendance.P, 0);
+        const totalAbsent = [...byStudent.values()].reduce((acc, s) => acc + s.attendance.A, 0);
+        const attendanceCtx = document.getElementById('overallAttendanceChart')?.getContext('2d');
+        if (attendanceCtx) {
+            chartInstances.overallAttendanceChart = new Chart(attendanceCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Present', 'Absent'],
+                    datasets: [{ data: [totalPresent, totalAbsent], backgroundColor: ['#4ade80', '#f87171'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
+            });
+        }
+
+        const marksCtx = document.getElementById('overallMarksChart')?.getContext('2d');
+        if (marksCtx) {
+            const testNames = tests.map(t => t.title);
+            const avgScores = tests.map(test => {
+                const scores = perf.filter(p => p.test_id === test.id && p.score !== null).map(p => p.score);
+                return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+            });
+            chartInstances.overallMarksChart = new Chart(marksCtx, {
+                type: 'bar',
+                data: {
+                    labels: testNames,
+                    datasets: [{ label: 'Average Score', data: avgScores, backgroundColor: '#6366f1' }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } },
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+      },0);
+
+      return header + body;
+    }
+
+    let studentToEdit = null;
+    async function openPerformanceEdit(roll){
+      const wantSpecific = teacherSelectedTestId !== 'all';
+      const [{ data: studentRows=[] }, { data: teachers=[] }, stuRes] = await Promise.all([
+        supabase.from('performance').select('id,teacher_id,subject,score,student_roll,test_id').eq('student_roll', roll),
+        supabase.from('teachers').select('id,name').eq('section', activeSection),
+        supabase.from('students').select('name, roll').eq('roll', roll).limit(1)
+      ]);
+      const s = stuRes.data?.[0];
+      studentToEdit = { roll, name: s?.name || roll };
+      document.getElementById('editStudentName').innerText = `Editing: ${studentToEdit.name}`;
+
+      const container = document.getElementById('editPerformanceForm');
+      container.innerHTML = '';
+      const filtered = wantSpecific ? studentRows.filter(r => r.test_id === Number(teacherSelectedTestId)) : studentRows;
+      (filtered.length ? filtered : studentRows).forEach(row=>{
+        const t = teachers.find(x=>x.id===row.teacher_id);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+          <div>
+            <label class="block text-slate-400">${row.subject} (${t? t.name : '—'})</label>
+            <input type="number" class="w-full bg-slate-700 p-2 rounded-lg" value="${row.score ?? ''}" data-perf-id="${row.id}">
+          </div>`;
+        container.appendChild(wrapper);
+      });
+      showModal(editPerformanceModal);
+    }
+    document.getElementById('editSaveBtn').addEventListener('click', async () => {
+      if (!studentToEdit) return;
+      const inputs = document.getElementById('editPerformanceForm').querySelectorAll('input[data-perf-id]');
+      const updates = [];
+      inputs.forEach(i => updates.push({ id: Number(i.dataset.perfId), score: Number(i.value) }));
+      for (const u of updates){
+        const { error } = await supabase.from('performance').update({ score:u.score }).eq('id', u.id);
+        if (error) { showNotification(`Update failed: ${error.message}`); return; }
+      }
+      hideModal(editPerformanceModal);
+      showNotification("Performance updated!");
+      await showTeacherSection('performance');
+    });
+    document.getElementById('editCancelBtn').addEventListener('click', () => hideModal(editPerformanceModal));
+
+    async function renderAttendanceTable(){
+      const [{ data: students=[] }, { data: dayRows=[] }] = await Promise.all([
+        supabase.from('students').select('roll,name,parent_phone').eq('section', activeSection).order('roll'),
+        supabase.from('attendance').select('student_roll,status').eq('teacher_id', loggedInEntity.id).eq('date', selectedAttendanceDate)
+      ]);
+      const dayMap = new Map(dayRows.map(r=>[r.student_roll, r.status]));
+      if (students.length===0) return '<p>No students in this batch.</p>';
+
+      setTimeout(()=>{
+        const dp = document.getElementById('attendanceDatePicker');
+        if (dp) dp.addEventListener('change', (e)=>{ selectedAttendanceDate = e.target.value || todayISO(); showTeacherSection('attendance'); });
+      },0);
+
+      const rows = students.map(s => {
+        const st = dayMap.get(s.roll) || 'N/A';
+        const statusClass = st==='P' ? 'bg-green-500/20 text-green-400' : st==='A' ? 'bg-red-500/20 text-red-400' : 'bg-slate-600 text-slate-300';
+        const waBtn = (st === 'A') ? `<button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : '';
+        const presentBtnClass = st==='P' ? 'btn-primary' : 'btn-secondary';
+        const absentBtnClass = st==='A' ? 'btn-danger' : 'btn-secondary';
+        return `
+          <tr>
+            <td data-label="Name">${s.name}</td>
+            <td data-label="Roll No">${s.roll}</td>
+            <td data-label="Status"><span class="px-2 py-1 rounded-full text-xs font-semibold ${statusClass}">${st}</span></td>
+            <td data-label="Actions" class="flex flex-wrap gap-2 items-center">
+              <button onclick="markAttendance('${s.roll}','P')" class="btn ${presentBtnClass} text-sm">P</button>
+              <button onclick="markAttendance('${s.roll}','A')" class="btn ${absentBtnClass} text-sm">A</button>
+              ${waBtn}
+              <button onclick="openDetailedAttendance('${s.roll}')" class="btn btn-secondary text-sm"><i class="fas fa-history"></i> History</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <p class="text-slate-400 mb-2">You are marking attendance for your subject: ${loggedInEntity.subject}</p>
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <label class="text-slate-400">Date:</label>
+            <input type="date" id="attendanceDatePicker" class="bg-slate-700 p-2 rounded-lg text-white" value="${selectedAttendanceDate}">
+            <button onclick="sendBulkAbsentReminders()" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Notify All Absent</button>
+          </div>
+          <table class="responsive-table">
+            <thead><tr><th>Name</th><th>Roll No</th><th>Status (${selectedAttendanceDate})</th><th>Actions</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+    async function markAttendance(roll, status){
+      const { data: existing } = await supabase.from('attendance')
+        .select('id,status').eq('student_roll', roll).eq('teacher_id', loggedInEntity.id).eq('date', selectedAttendanceDate).limit(1);
+      if (existing && existing.length>0){
+        const cur = existing[0];
+        const newStatus = cur.status === status ? 'N/A' : status;
+        if (newStatus === 'N/A'){
+          await supabase.from('attendance').delete().eq('id', cur.id);
+        } else {
+          await supabase.from('attendance').update({ status:newStatus }).eq('id', cur.id);
+        }
+      } else {
+        await supabase.from('attendance').insert({ student_roll:roll, teacher_id:loggedInEntity.id, date:selectedAttendanceDate, status });
+      }
+      await showTeacherSection('attendance');
+    }
+    async function openDetailedAttendance(roll){
+      const titleEl = document.getElementById('detailedAttendanceTitle');
+      const contentEl = document.getElementById('detailedAttendanceContent');
+      titleEl.textContent = `Detailed Attendance — ${roll}`;
+      const { data = [] } = await supabase.from('attendance').select('date,status,teacher_id').eq('student_roll', roll).order('date', { ascending:false });
+      contentEl.innerHTML = data.length ?
+        `<ul class="space-y-2">${data.map(r=>`<li class="bg-slate-800 p-2 rounded">${r.date}: ${r.status}</li>`).join('')}</ul>` :
+        `<p class="text-slate-400">No records.</p>`;
+      showModal(detailedAttendanceModal);
+    }
+    async function sendBulkAbsentReminders(){
+      const [{ data: students=[] }, { data: dayRows=[] }] = await Promise.all([
+        supabase.from('students').select('roll,name,parent_phone').eq('section', activeSection),
+        supabase.from('attendance').select('student_roll').eq('teacher_id', loggedInEntity.id).eq('date', selectedAttendanceDate).eq('status','A')
+      ]);
+      const absentSet = new Set(dayRows.map(r=>r.student_roll));
+      const list = document.getElementById('bulkReminderList');
+      list.innerHTML = '';
+      students.filter(s=> absentSet.has(s.roll)).forEach(s => {
+        const a = document.createElement('a');
+        a.href = `https://wa.me/${s.parent_phone||''}?text=${encodeURIComponent(`Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.`)}`;
+        a.target = "_blank";
+        a.className = "block bg-slate-800 p-2 rounded hover:bg-slate-700";
+        a.textContent = `Message parent of ${s.name} (${s.roll})`;
+        list.appendChild(a);
+      });
+      showModal(bulkReminderModal);
+    }
+
+    async function renderFeesTable(){
+      const { data: students=[] } = await supabase.from('students').select('roll,name,fee_status,parent_phone').eq('section', activeSection).order('roll');
+      return `
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <div class="mb-4">
+            <button onclick="sendBulkDueFeeReminders()" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Send Reminders to All Due</button>
+          </div>
+          <table class="responsive-table">
+            <thead><tr><th>Name</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${students.map(s=>`
+                <tr>
+                  <td data-label="Name">${s.name}</td>
+                  <td data-label="Status"><span class="px-2 py-1 rounded-full text-xs font-semibold ${s.fee_status==='paid'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}">${s.fee_status}</span></td>
+                  <td data-label="Actions" class="flex flex-wrap gap-2">
+                    <button onclick="updateFeeStatus('${s.roll}','paid')" class="btn btn-secondary text-sm">Paid</button>
+                    <button onclick="updateFeeStatus('${s.roll}','due')" class="btn btn-secondary text-sm">Due</button>
+                    ${s.fee_status==='due' ? `<button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Reminder: Coaching Centre fees for ${s.name} are due.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : ''}
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+    async function updateFeeStatus(roll, status){
+      const { error } = await supabase.from('students').update({ fee_status: status }).eq('roll', roll);
+      if (error) return showNotification(`Failed: ${error.message}`);
+      await showTeacherSection('fees');
+    }
+    async function sendBulkDueFeeReminders() {
+      const { data: students = [] } = await supabase
+        .from('students').select('name,parent_phone').eq('section', activeSection).eq('fee_status', 'due');
+      const list = document.getElementById('bulkReminderList');
+      list.innerHTML = '';
+      students.forEach((s) => {
+        const msg = `Reminder: Coaching Centre fees for ${s.name} are due.`;
+        const a = document.createElement('a');
+        a.href = `https://wa.me/${s.parent_phone || ''}?text=${encodeURIComponent(msg)}`;
+        a.target = '_blank';
+        a.className = 'block bg-slate-800 p-2 rounded hover:bg-slate-700';
+        a.textContent = `Message parent of ${s.name}`;
+        list.appendChild(a);
+      });
+      showModal(bulkReminderModal);
+    }
+
+    async function renderMaterialsManager(){
+      const { data: materials=[] } = await supabase.from('materials').select('*').eq('section', activeSection).order('id', { ascending:false });
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg space-y-4">
+          <div>
+            <input id="materialTitle" class="w-full bg-slate-700 p-2 rounded-lg mb-2" placeholder="Material Title (Required)">
+            <input id="materialLink" class="w-full bg-slate-700 p-2 rounded-lg mb-2" placeholder="OR Paste a Link Here">
+            <div>
+              <label for="materialFile" class="text-slate-400 block mb-1">OR Choose File to Upload:</label>
+              <input id="materialFile" type="file" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+            </div>
+            <button onclick="addMaterial()" class="btn btn-primary mt-4">Add Material</button>
+          </div>
+          <h3 class="text-xl font-bold border-t border-slate-700 pt-4">Posted Materials</h3>
+          <ul class="space-y-2">
+            ${materials.length ? materials.map(m=>`
+              <li class="flex justify-between items-center bg-slate-700 p-3 rounded-lg">
+                <a href="${m.link}" target="_blank" class="text-indigo-400 hover:underline">${m.title}</a>
+                <button onclick="deleteMaterial(${m.id}, '${m.storage_path||''}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+              </li>`).join('') : '<p class="text-slate-500">No materials posted yet.</p>'}
+          </ul>
+        </div>`;
+    }
+    async function addMaterial(){
+      const title = document.getElementById('materialTitle').value.trim();
+      const link = document.getElementById('materialLink').value.trim();
+      const fileEl = document.getElementById('materialFile');
+      if (!title) return showNotification('Title is required.');
+      let finalLink = link || null;
+      let storage_path = null;
+      if (!finalLink && fileEl.files && fileEl.files[0]){
+        const f = fileEl.files[0];
+        const url = await uploadToBucket(f, BUCKETS.materials, activeSection);
+        if (url) finalLink = url; else return;
+      }
+      if (!finalLink) return showNotification('Provide a link or upload a file.');
+      const { error } = await supabase.from('materials').insert({ section: activeSection, title, link: finalLink, storage_path });
+      if (error) return showNotification(`Could not add: ${error.message}`);
+      showNotification('Material added.');
+      await showTeacherSection('materials');
+    }
+    async function deleteMaterial(id, storage_path){
+      showConfirmation('Delete this material?', async () => {
+        const { error } = await supabase.from('materials').delete().eq('id', id);
+        if (error) return showNotification(`Delete failed: ${error.message}`);
+        if (storage_path) await supabase.storage.from('materials').remove([storage_path]);
+        await showTeacherSection('materials');
+      });
+    }
+
+    async function renderTimetableManager(){
+      const { data: timetable=[] } = await supabase.from('timetables').select('*').eq('section', activeSection).order('id', { ascending:true });
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input id="ttDay" class="bg-slate-700 p-2 rounded-lg" placeholder="Day (e.g., Monday)">
+            <input id="ttTime" class="bg-slate-700 p-2 rounded-lg" placeholder="Time (e.g., 9:00 AM)">
+            <input id="ttSubject" class="bg-slate-700 p-2 rounded-lg" placeholder="Subject">
+          </div>
+          <button onclick="addTimetableEntry()" class="btn btn-primary">Add Entry</button>
+          <h3 class="text-xl font-bold border-t border-slate-700 pt-4">Class Timetable</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <tbody>
+                ${timetable.length ? timetable.map(t=>`
+                  <tr class="border-b border-slate-700">
+                    <td class="p-2 font-bold">${t.day}</td>
+                    <td class="p-2">${t.time}</td>
+                    <td class="p-2">${t.subject}</td>
+                    <td class="p-2 text-right"><button onclick="deleteTimetableEntry(${t.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
+                  </tr>`).join('') : '<tr><td class="p-2 text-slate-500">No timetable posted yet.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+    async function addTimetableEntry(){
+      const day = document.getElementById('ttDay').value.trim();
+      const time = document.getElementById('ttTime').value.trim();
+      const subject = document.getElementById('ttSubject').value.trim();
+      if (!day || !time || !subject) return showNotification('Fill all fields.');
+      const { error } = await supabase.from('timetables').insert({ section: activeSection, day, time, subject });
+      if (error) return showNotification(`Failed: ${error.message}`);
+      await showTeacherSection('timetable');
+    }
+    async function deleteTimetableEntry(id){
+      const { error } = await supabase.from('timetables').delete().eq('id', id);
+      if (error) return showNotification(`Delete failed: ${error.message}`);
+      await showTeacherSection('timetable');
+    }
+
+    async function renderAnnouncementsManager(){
+      const { data: announcements=[] } = await supabase.from('announcements').select('*').in('section', [activeSection, 'all']).order('id', { ascending:false });
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg space-y-4">
+          <div>
+            <textarea id="announcementText" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Write your announcement..."></textarea>
+            <div class="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="isImportantAnnouncement" class="h-4 w-4 rounded bg-slate-700 border-slate-500 text-indigo-600 focus:ring-indigo-500">
+              <label for="isImportantAnnouncement" class="text-slate-400">Mark as Important</label>
+            </div>
+            <button onclick="postAnnouncement()" class="btn btn-primary mt-2">Post to ${activeSection}</button>
+            <button onclick="postAnnouncement('all')" class="btn btn-secondary mt-2">Post to All Batches</button>
+          </div>
+          <h3 class="text-xl font-bold border-t border-slate-700 pt-4">Recent Announcements</h3>
+          <ul class="space-y-3">
+            ${announcements.length ? announcements.map(a=>`
+              <li class="bg-slate-700 p-3 rounded-lg ${a.important ? 'announcement-important' : ''}">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm text-slate-400">To: ${a.section} on ${a.date} ${a.important ? '<span class="font-bold text-red-400">(Important)</span>' : ''}</p>
+                    <p>${a.text}</p>
+                  </div>
+                  <button onclick="deleteAnnouncement(${a.id})" class="btn btn-danger text-sm"><i class="fas fa-trash"></i></button>
+                </div>
+              </li>`).join('') : '<p class="text-slate-500">No announcements posted yet.</p>'}
+          </ul>
+        </div>`;
+    }
+    async function postAnnouncement(scope){
+      const text = document.getElementById('announcementText').value.trim();
+      const important = document.getElementById('isImportantAnnouncement').checked;
+      const section = scope || activeSection;
+      if (!text) return showNotification('Write something.');
+      const { error } = await supabase.from('announcements').insert({ section, text, important });
+      if (error) return showNotification(`Failed: ${error.message}`);
+      await showTeacherSection('announcements');
+    }
+    async function deleteAnnouncement(id){
+      const { error } = await supabase.from('announcements').delete().eq('id', id);
+      if (error) return showNotification(`Delete failed: ${error.message}`);
+      await showTeacherSection('announcements');
+    }
+
+    function renderTeacherSettings(){
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg">
+          <h3 class="text-xl font-bold mb-4">Account Settings</h3>
+          <p class="mb-2">Your current PIN is confidential.</p>
+          <button onclick="showModal(changePinModal)" class="btn btn-primary">Change My PIN</button>
+        </div>`;
+    }
+    async function updateTeacherPin(){
+      const np = document.getElementById('newPinInput').value.trim();
+      const cp = document.getElementById('confirmNewPinInput').value.trim();
+      if (!np || !cp || np!==cp) return showNotification('Pins must match.');
+      const { error } = await supabase.from('teachers').update({ teacher_pin: np }).eq('id', loggedInEntity.id);
+      if (error) return showNotification(`Failed: ${error.message}`);
+      loggedInEntity.teacher_pin = np;
+      hideModal(changePinModal);
+      showNotification('PIN updated.');
+    }
+
+    async function renderStudentDashboard(){
+      const user = { type:'student', title:'Student Dashboard', entity: loggedInEntity };
+      const sections = [
+        { id:'performance', name:'My Performance', icon:'<i class="fas fa-chart-pie fa-fw mr-2"></i>' },
+        { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
+        { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
+        { id:'attendance', name:'My Attendance', icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
+        { id:'materials', name:'Class Materials', icon:'<i class="fas fa-book-open fa-fw mr-2"></i>' },
+        { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
+        { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
+        { id:'teachers', name:'My Teachers', icon:'<i class="fas fa-chalkboard-teacher fa-fw mr-2"></i>' },
+      ];
+      studentDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
+      attachSidebarListeners('student');
+      await showStudentSection('performance');
+    }
+
+    async function showStudentSection(sectionId){
+      const titleEl = document.getElementById('studentSectionTitle');
+      const contentEl = document.getElementById('studentContent');
+      const controlsEl = document.getElementById('studentHeaderControls');
+      
+      Object.values(chartInstances).forEach(chart => chart.destroy());
+      chartInstances = {};
+
+      controlsEl.innerHTML = `<p class="text-sm text-slate-400">Roll: <span class="font-mono bg-slate-700 px-2 py-1 rounded">${loggedInEntity.roll}</span></p>`;
+      switch(sectionId){
+        case 'performance': titleEl.innerText='My Performance'; contentEl.innerHTML = await renderStudentPerformance(); break;
+        case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(); break;
+        case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderStudentDPPsView(); break;
+        case 'attendance': titleEl.innerText='My Attendance'; contentEl.innerHTML = await renderStudentAttendance(); break;
+        case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
+        case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
+        case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
+        case 'teachers': titleEl.innerText='My Teachers'; contentEl.innerHTML = await renderStudentTeachers(); break;
+        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+      }
+    }
+
+    let studentPerfSelectedTestId = 'all';
+    let studentPerfSelectedMonth = 'all';
+    async function renderStudentPerformance(){
+      const roll = loggedInEntity.roll;
+      const [perfRes, teachersRes, testsRes, attendanceRes] = await Promise.all([
+        supabase.from('performance').select('teacher_id,subject,score,test_id,student_roll').eq('student_roll', roll),
+        supabase.from('teachers').select('id,name').eq('section', activeSection),
+        supabase.from('online_tests').select('id, title, created_at'),
+        supabase.from('attendance').select('status').eq('student_roll', roll)
+      ]);
+      const rows = perfRes.data || [];
+      const tests = testsRes.data || [];
+      const tMap = new Map((teachersRes.data||[]).map(t=>[t.id,t.name]));
+      const testsMap = new Map(tests.map(t=>[t.id, t]));
+      const monthKey = (d) => (d||'').slice(0,7);
+      const unique = (arr)=>[...new Set(arr)];
+      const months = unique(tests.map(t => monthKey(t.created_at))).filter(Boolean);
+      const monthOptions = '<option value="all">All months</option>' + months.map(m=>`<option value="${m}" ${m===studentPerfSelectedMonth?'selected':''}>${m}</option>`).join('');
+      const testOptions = '<option value="all">All tests</option>' + tests.map(t=>`<option value="${t.id}" ${String(t.id)===String(studentPerfSelectedTestId)?'selected':''}>${t.title}</option>`).join('');
+
+      const filtered = rows.filter(r=>{
+        const byTest = (studentPerfSelectedTestId==='all') || (r.test_id && String(r.test_id)===String(studentPerfSelectedTestId));
+        const byMonth = (studentPerfSelectedMonth==='all') || (r.test_id && monthKey(testsMap.get(r.test_id)?.created_at)===studentPerfSelectedMonth);
+        return byTest && byMonth;
+      });
+
+      const chartContainer = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <h3 class="text-lg font-bold text-center mb-2">My Attendance</h3>
+                <canvas id="studentAttendanceChart"></canvas>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <h3 class="text-lg font-bold text-center mb-2">My Test Scores</h3>
+                <canvas id="studentMarksChart"></canvas>
+            </div>
+        </div>`;
+
+      if (!filtered.length) {
+        return `
+          <div class="bg-slate-800 p-4 rounded-lg mb-4 flex flex-wrap gap-2 items-center">
+            <label class="text-slate-400">Test:</label><select id="stuTestFilter" class="bg-slate-700 p-2 rounded-lg text-white">${testOptions}</select>
+            <label class="text-slate-400 ml-2">Month:</label><select id="stuMonthFilter" class="bg-slate-700 p-2 rounded-lg text-white">${monthOptions}</select>
+            <p class="text-slate-400 ml-auto text-sm">No records. ${tests.length? 'Try different filters.' : 'No tests yet.'}</p>
+          </div>
+          ${chartContainer}`;
+      }
+
+      let sum=0; filtered.forEach(r=> sum += Number(r.score||0));
+      const avg = (sum/filtered.length).toFixed(2);
+      const cards = filtered.map(r=>`
+        <div class="bg-slate-800 p-4 rounded-lg">
+          <h3 class="text-xl font-bold mb-2">${r.subject} <span class="text-sm font-normal text-slate-400">(with ${tMap.get(r.teacher_id)||'—'})</span></h3>
+          <p>Score: <span class="font-bold text-indigo-400">${r.score ?? '—'}</span></p>
+        </div>`).join('');
+
+      setTimeout(()=>{
+        const a = document.getElementById('stuTestFilter');
+        const b = document.getElementById('stuMonthFilter');
+        if (a) a.onchange = (e)=>{ studentPerfSelectedTestId = e.target.value || 'all'; showStudentSection('performance'); };
+        if (b) b.onchange = (e)=>{ studentPerfSelectedMonth = e.target.value || 'all'; showStudentSection('performance'); };
+
+        const presentCount = attendanceRes.data.filter(a => a.status === 'P').length;
+        const absentCount = attendanceRes.data.filter(a => a.status === 'A').length;
+        const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
+        if (attendanceCtx) {
+            chartInstances.studentAttendanceChart = new Chart(attendanceCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Present', 'Absent'],
+                    datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
+            });
+        }
+        
+        const marksCtx = document.getElementById('studentMarksChart')?.getContext('2d');
+        if (marksCtx) {
+            const testNames = filtered.map(p => testsMap.get(p.test_id)?.title || 'Unknown Test');
+            const scores = filtered.map(p => p.score);
+            chartInstances.studentMarksChart = new Chart(marksCtx, {
+                type: 'bar',
+                data: {
+                    labels: testNames,
+                    datasets: [{ label: 'Score', data: scores, backgroundColor: '#6366f1' }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } },
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+      },0);
+
+      return `
+        <div class="bg-slate-800 p-4 rounded-lg mb-4 flex flex-wrap gap-2 items-center">
+          <label class="text-slate-400">Test:</label><select id="stuTestFilter" class="bg-slate-700 p-2 rounded-lg text-white">${testOptions}</select>
+          <label class="text-slate-400 ml-2">Month:</label><select id="stuMonthFilter" class="bg-slate-700 p-2 rounded-lg text-white">${monthOptions}</select>
+          <span class="text-slate-400 text-sm ml-auto">Filters active</span>
+        </div>
+        ${chartContainer}
+        <div class="space-y-4">
+          <div class="bg-slate-800 p-4 rounded-lg">
+            <h3 class="text-2xl font-bold">Overall Average</h3>
+            <p class="text-4xl font-bold text-indigo-400">${avg}</p>
+          </div>
+          <h3 class="text-2xl font-bold mt-6">Subject Performance</h3>
+          <div class="grid md:grid-cols-2 gap-4">${cards}</div>
+        </div>`;
+    }
+
+    async function renderStudentAttendance(){
+      const roll = loggedInEntity.roll;
+      const [{ data: rows=[] }, { data: teachers=[] }] = await Promise.all([
+        supabase.from('attendance').select('teacher_id,date,status').eq('student_roll', roll),
+        supabase.from('teachers').select('id,name,subject').eq('section', activeSection)
+      ]);
+      const byTeacher = new Map();
+      rows.forEach(r=> {
+        if (!byTeacher.has(r.teacher_id)) byTeacher.set(r.teacher_id, []);
+        byTeacher.get(r.teacher_id).push(r);
+      });
+      const cards = teachers.map(t => {
+        const hist = byTeacher.get(t.id) || [];
+        const present = hist.filter(h=>h.status==='P').length;
+        const total = hist.length || 1;
+        const pct = Math.round((present/total)*100);
+        return `
+          <div class="bg-slate-800 p-4 rounded-lg">
+            <h3 class="text-xl font-bold mb-2">${t.subject} <span class="text-sm text-slate-400">(${t.name})</span></h3>
+            <p>Attendance: <span class="font-bold text-indigo-400">${pct}%</span></p>
+          </div>`;
+      }).join('');
+      return `<div class="grid md:grid-cols-2 gap-4">${cards}</div>`;
+    }
+    async function renderStudentMaterials(){
+      const { data: materials=[] } = await supabase.from('materials').select('*').eq('section', activeSection).order('id', { ascending:false });
+      return `<ul class="space-y-2">${materials.map(m=>`<li class="bg-slate-800 p-3 rounded-lg"><a href="${m.link}" target="_blank" class="text-indigo-400 hover:underline">${m.title}</a></li>`).join('') || '<li class="text-slate-400">No materials yet.</li>'}</ul>`;
+    }
+    async function renderStudentTimetable(){
+      const { data: timetable=[] } = await supabase.from('timetables').select('*').eq('section', activeSection).order('id', { ascending:true });
+      return `<ul class="space-y-2">${timetable.map(t=>`<li class="bg-slate-800 p-3 rounded-lg">${t.day} — ${t.time} — <span class="font-semibold">${t.subject}</span></li>`).join('') || '<li class="text-slate-400">No timetable posted yet.</li>'}</ul>`;
+    }
+    async function renderStudentAnnouncements(){
+      const { data: announcements=[] } = await supabase.from('announcements').select('*').in('section', [activeSection, 'all']).order('id', { ascending:false });
+      return `<ul class="space-y-2">${announcements.map(a=>`<li class="bg-slate-800 p-3 rounded-lg ${a.important?'announcement-important':''}">${a.text} <span class="text-xs text-slate-400">(${a.date || ''} • to ${a.section})${a.important ? ' • Important' : ''}</span></li>`).join('') || '<li class="text-slate-400">No announcements yet.</li>'}</ul>`;
+    }
+
+    async function renderStudentTeachers(){
+      const { data: teachers=[] } = await supabase.from('teachers').select('name,subject,whatsapp,section').eq('section', activeSection);
+      if (!teachers.length) return '<p class="text-slate-400">No teachers found for this batch.</p>';
+      return `
+        <div class="grid md:grid-cols-2 gap-4">
+          ${teachers.map(t=>`
+            <div class="bg-slate-800 p-4 rounded-lg">
+              <h3 class="text-xl font-bold">${t.name}</h3>
+              <p class="text-slate-400">Subject: ${t.subject}</p>
+              ${t.whatsapp ? `<button class="btn btn-whatsapp mt-2" onclick="sendWhatsAppDeepLink('${t.whatsapp}','Hello ${t.name}, I have a query.')"><i class="fab fa-whatsapp"></i> Message</button>` : ''}
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    async function renderParentDashboard(){
+      const user = { type:'parent', title:'Parent Dashboard', entity: loggedInEntity };
+      const sections = [
+        { id:'performance', name:"Child's Performance", icon:'<i class="fas fa-chart-pie fa-fw mr-2"></i>' },
+        { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
+        { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
+        { id:'attendance', name:"Child's Attendance", icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
+        { id:'materials', name:'Class Materials', icon:'<i class="fas fa-book-open fa-fw mr-2"></i>' },
+        { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
+        { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
+      ];
+      parentDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
+      attachSidebarListeners('parent');
+      await showParentSection('performance');
+    }
+
+    async function showParentSection(sectionId){
+      const titleEl = document.getElementById('parentSectionTitle');
+      const contentEl = document.getElementById('parentContent');
+      const controlsEl = document.getElementById('parentHeaderControls');
+      controlsEl.innerHTML = `
+        <div class="flex items-center gap-4">
+            <p class="text-sm text-slate-400">Child: <span class="font-mono bg-slate-700 px-2 py-1 rounded">${loggedInEntity.name} — ${loggedInEntity.roll}</span></p>
+            <button onclick="sendNudgeToStudent('${loggedInEntity.roll}')" class="btn btn-primary btn-sm"><i class="fas fa-hand-point-right mr-2"></i>Nudge to Study</button>
+        </div>
+      `;
+      switch(sectionId){
+        case 'performance': titleEl.innerText="Child's Performance"; contentEl.innerHTML = await renderStudentPerformance(); break;
+        case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(true); break; // Pass true for parent view
+        case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderStudentDPPsView(); break;
+        case 'attendance': titleEl.innerText="Child's Attendance"; contentEl.innerHTML = await renderStudentAttendance(); break;
+        case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
+        case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
+        case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
+        default: titleEl.innerText='Error'; contentEl.innerHTML='<p>Section not found.</p>';
+      }
+    }
+    
+    async function sendNudgeToStudent(studentRoll) {
+        const { error } = await supabase.from('nudges').insert({ student_roll: studentRoll, message: `Your parent sent a nudge to remind you to focus on your studies!` });
+        if (error) {
+            showNotification(`Could not send nudge: ${error.message}`);
+        } else {
+            showNotification('Nudge sent successfully!');
+        }
+    }
+
+
+    async function openPerformanceReport(roll, summary=false){
+      const [{ data: perf=[] }, { data: stu=[] }, { data: teachers=[] }, {data: tests=[]}] = await Promise.all([
+        supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll).order('created_at', { ascending:false }),
+        supabase.from('students').select('name,roll,section').eq('roll', roll).limit(1),
+        supabase.from('teachers').select('id,name,subject').eq('section', activeSection),
+        supabase.from('online_tests').select('id, title')
+      ]);
+      const s = stu?.[0];
+      const tMap = new Map(teachers.map(t=>[t.id, t]));
+      const testMap = new Map(tests.map(x=>[x.id, x]));
+
+      let body = `
+        <div>
+          <p class="text-slate-400 mb-2">Name: <span class="font-semibold text-white">${s?.name || roll}</span></p>
+          <p class="text-slate-400 mb-4">Roll: <span class="font-mono bg-slate-800 px-2 py-1 rounded">${s?.roll || roll}</span> • Batch: ${s?.section || activeSection}</p>
+      `;
+
+      if (!perf.length){
+        body += `<p class="text-slate-400">No performance records.</p></div>`;
+      } else {
+        const rows = summary ? perf.slice(0, 10) : perf;
+        body += `<table class="w-full text-sm">
+          <thead><tr class="text-slate-400"><th class="text-left p-2">Subject</th><th class="text-left p-2">Teacher</th><th class="text-left p-2">Test</th><th class="text-left p-2">Score</th><th class="text-left p-2">Date</th></tr></thead>
+          <tbody>
+            ${rows.map(r=>{
+              const t = tMap.get(r.teacher_id);
+              const test = r.test_id ? testMap.get(r.test_id) : null;
+              return `<tr class="border-b border-slate-800">
+                <td class="p-2">${r.subject}</td>
+                <td class="p-2">${t ? t.name : '—'}</td>
+                <td class="p-2">${test ? test.title : '—'}</td>
+                <td class="p-2">${r.score ?? '—'}</td>
+                <td class="p-2">${(r.created_at||'').slice(0,10)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table></div>`;
+      }
+
+      document.getElementById('reportContent').innerHTML = body;
+      showModal(reportModal);
+    }
+
+    document.getElementById('reportCloseBtn').onclick = () => hideModal(reportModal);
+    document.getElementById('downloadPdfBtn').onclick = async () => {
+      const el = document.getElementById('reportContentContainer');
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0f172a' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const ratio = canvas.width / canvas.height;
+      const pdfWidth = pageWidth - 40;
+      const pdfHeight = pdfWidth / ratio;
+      pdf.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+      pdf.save('performance-report.pdf');
+    };
+    document.getElementById('sendReportWhatsAppBtn').onclick = () => {
+      const text = document.getElementById('reportContent').innerText.slice(0, 1500);
+      openWhatsAppMessage(`Performance Report:%0A%0A${text}`);
+    };
+
+    // --- ENHANCED ONLINE TEST LOGIC ---
+    async function renderOnlineTestsManager() {
+        const { data: tests, error } = await supabase.from('online_tests').select('*').eq('section', activeSection).order('created_at', { ascending: false });
+        if (error) return `<p class="text-red-400">Error loading tests: ${error.message}</p>`;
+
+        const testRows = tests.map(test => `
+            <tr>
+                <td data-label="Title">${test.title}</td>
+                <td data-label="Questions">${test.questions.length}</td>
+                <td data-label="Created">${new Date(test.created_at).toLocaleDateString()}</td>
+                <td data-label="Actions" class="flex flex-wrap gap-2">
+                    <button class="btn btn-secondary text-sm" onclick="openSubmissionsModal(${test.id}, '${test.title.replace(/'/g, "\\'")}')"><i class="fas fa-eye"></i> View Submissions</button>
+                    <button class="btn btn-danger text-sm" onclick="deleteOnlineTest(${test.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <button onclick="openCreateTestModal()" class="btn btn-primary mb-4"><i class="fas fa-plus"></i> Create New Online Test</button>
+                <div class="overflow-x-auto">
+                    <table class="responsive-table">
+                        <thead><tr><th>Title</th><th>Questions</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody>${testRows || '<tr><td colspan="4" class="text-slate-400">No online tests created yet.</td></tr>'}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function openCreateTestModal() {
+        document.getElementById('onlineTestTitle').value = '';
+        document.getElementById('onlineTestSyllabus').value = '';
+        document.getElementById('questionsContainer').innerHTML = '<p class="text-slate-500 text-center p-4">Click "Generate Questions" to begin.</p>';
+        showModal(createTestModal);
+    }
+    
+    document.getElementById('generateQuestionsBtn').addEventListener('click', generateTestWithAI);
+    document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestionToCreator(null, 'mcq'));
+    document.getElementById('addSubjectiveQuestionBtn').addEventListener('click', () => addQuestionToCreator(null, 'subjective'));
+    
+    let questionCount = 0;
+    function addQuestionToCreator(data = {}, type = 'mcq') {
+        if (document.querySelector('#questionsContainer p')) {
+            document.getElementById('questionsContainer').innerHTML = '';
+        }
+        questionCount++;
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2 question-block';
+        questionDiv.dataset.type = type;
+
+        let contentHTML = `
+            <div class="flex justify-between items-center">
+                <input type="text" class="w-full bg-slate-700 p-2 rounded-lg question-text" placeholder="Question ${questionCount}" value="${data.question || ''}">
+                <button class="text-red-400 hover:text-red-600 ml-2" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            </div>`;
+
+        if (type === 'mcq') {
+            contentHTML += `
+                <div class="grid grid-cols-2 gap-2 mcq-options">
+                    ${[0,1,2,3].map(i => `
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct_${questionCount}" value="${i}" ${data.correct_answer === i ? 'checked' : ''} class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600">
+                            <input type="text" class="w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${data.options?.[i] || ''}">
+                        </div>
+                    `).join('')}
+                </div>`;
+        } else { // subjective
+            contentHTML += `<textarea class="w-full bg-slate-700 p-2 rounded-lg model-answer" placeholder="Model Answer / Grading Rubric...">${data.model_answer || ''}</textarea>`;
+        }
+        questionDiv.innerHTML = contentHTML;
+        document.getElementById('questionsContainer').appendChild(questionDiv);
+    }
+
+    async function generateTestWithAI() {
+        const syllabus = document.getElementById('onlineTestSyllabus').value.trim();
+        const difficulty = document.getElementById('onlineTestDifficulty').value;
+        const numQuestions = document.getElementById('onlineTestNumQuestions').value;
+        const statusDiv = document.getElementById('aiGenerationStatus');
+        const genBtn = document.getElementById('generateQuestionsBtn');
+
+        if (!syllabus) return showNotification('Please enter a topic or syllabus.');
+        
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating questions... Please wait.';
+        statusDiv.classList.remove('hidden');
+        genBtn.disabled = true;
+
+        const prompt = `
+            Generate a ${difficulty} level test with ${numQuestions} questions based on the following syllabus: "${syllabus}".
+            Include a mix of multiple-choice questions (mcq) and subjective short-answer questions.
+            Provide the output as a clean JSON array of objects, without any surrounding text or markdown.
+            Each object in the array should have:
+            1. A "type" property: either "mcq" or "subjective".
+            2. A "question" property (string).
+            3. For "mcq" type: an "options" property (an array of 4 strings) and a "correct_answer" property (the 0-based index of the correct option).
+            4. For "subjective" type: a "model_answer" property (a string explaining the ideal answer).
+
+            Example format:
+            [
+                { "type": "mcq", "question": "What is the capital of France?", "options": ["Berlin", "Madrid", "Paris", "Rome"], "correct_answer": 2 },
+                { "type": "subjective", "question": "Explain Newton's First Law.", "model_answer": "Newton's First Law states that an object will remain at rest or in uniform motion in a straight line unless acted upon by an external force. It is also known as the law of inertia." }
+            ]
+        `;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('API request failed');
+            const data = await response.json();
+            let text = data.candidates[0].content.parts[0].text;
+            
+            // Clean up the response to get only the JSON
+            const jsonMatch = text.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) throw new Error('Could not find valid JSON in AI response.');
+            
+            const questions = JSON.parse(jsonMatch[0]);
+            
+            document.getElementById('questionsContainer').innerHTML = ''; // Clear previous
+            questions.forEach(q => addQuestionToCreator(q, q.type));
+
+        } catch (e) {
+            statusDiv.textContent = `Error: ${e.message}. Please try again.`;
+            return;
+        } finally {
+            statusDiv.classList.add('hidden');
+            genBtn.disabled = false;
+        }
+    }
+
+
+    document.getElementById('saveOnlineTestBtn').addEventListener('click', async () => {
+        const title = document.getElementById('onlineTestTitle').value.trim();
+        if (!title) return showNotification('Test title is required.');
+
+        const questions = [];
+        const questionElements = document.querySelectorAll('.question-block');
+        for (const qEl of questionElements) {
+            const type = qEl.dataset.type;
+            const questionText = qEl.querySelector('.question-text').value.trim();
+            if (!questionText) return showNotification('Please ensure all question fields are filled.');
+            
+            if (type === 'mcq') {
+                const options = [...qEl.querySelectorAll('.mcq-options input[type="text"]')].map(opt => opt.value.trim());
+                const correctIndex = qEl.querySelector('.mcq-options input[type="radio"]:checked')?.value;
+                if (options.some(o => !o) || correctIndex === undefined) return showNotification('Please fill all options and select a correct answer for MCQs.');
+                questions.push({ type: 'mcq', question: questionText, options, correct_answer: parseInt(correctIndex) });
+            } else { // subjective
+                const modelAnswer = qEl.querySelector('.model-answer').value.trim();
+                if (!modelAnswer) return showNotification('Please provide a model answer for subjective questions.');
+                questions.push({ type: 'subjective', question: questionText, model_answer: modelAnswer });
+            }
+        }
+
+        if (questions.length === 0) return showNotification('Please add at least one question to the test.');
+
+        const { error } = await supabase.from('online_tests').insert({
+            title,
+            section: activeSection,
+            questions,
+            teacher_id: loggedInEntity.id
+        });
+
+        if (error) {
+            showNotification(`Error saving test: ${error.message}`);
+        } else {
+            showNotification('Online test created successfully!');
+            hideModal(createTestModal);
+            await showTeacherSection('online_tests');
+        }
+    });
+    
+    async function deleteOnlineTest(testId) {
+        showConfirmation('Are you sure you want to delete this online test and all its submissions?', async () => {
+            const { error } = await supabase.from('online_tests').delete().eq('id', testId);
+            if (error) {
+                showNotification(`Error deleting test: ${error.message}`);
+            } else {
+                showNotification('Test deleted.');
+                await showTeacherSection('online_tests');
+            }
+        });
+    }
+
+    async function renderStudentOnlineTests(isParent = false) {
+        const { data: tests, error } = await supabase.from('online_tests').select('*').eq('section', activeSection).order('created_at', { ascending: false });
+        if (error) return `<p class="text-red-400">Could not load tests.</p>`;
+
+        const testCards = tests.map(test => `
+            <div class="bg-slate-800 p-4 rounded-lg flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold">${test.title}</h3>
+                    <p class="text-sm text-slate-400">${test.questions.length} questions</p>
+                </div>
+                ${!isParent ? `<button class="btn btn-primary" onclick="startTest(${test.id})">Start Test</button>` : ''}
+            </div>
+        `).join('');
+
+        return `<div class="space-y-4">${testCards || '<p>No online tests available yet.</p>'}</div>`;
+    }
+
+    async function startTest(testId) {
+        const { data: test, error } = await supabase.from('online_tests').select('*').eq('id', testId).single();
+        if (error || !test) return showNotification('Could not load the test.');
+
+        document.getElementById('takeTestTitle').textContent = test.title;
+        const container = document.getElementById('takeTestQuestionsContainer');
+        container.innerHTML = test.questions.map((q, index) => `
+            <div class="space-y-2">
+                <p class="font-semibold">${index + 1}. ${q.question}</p>
+                <div class="space-y-1 pl-4">
+                    ${q.type === 'mcq' ?
+                        q.options.map((opt, optIndex) => `
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="q_${index}" value="${optIndex}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('') :
+                        `<textarea name="q_${index}" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Your answer..."></textarea>`
+                    }
+                </div>
+            </div>
+        `).join('');
+
+        const submitBtn = document.getElementById('submitTestBtn');
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        newSubmitBtn.onclick = () => submitTest(testId, test.questions);
+
+        showModal(takeTestModal);
+    }
+    
+    async function submitTest(testId, questions) {
+        const answers = [];
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            const inputEl = document.querySelector(`[name="q_${i}"]`);
+            if (q.type === 'mcq') {
+                const selected = document.querySelector(`input[name="q_${i}"]:checked`);
+                answers.push(selected ? parseInt(selected.value) : null);
+            } else {
+                answers.push(inputEl.value.trim());
+            }
+        }
+
+        const { error } = await supabase.from('test_submissions').insert({
+            test_id: testId,
+            student_roll: loggedInEntity.roll,
+            answers: answers
+        });
+
+        if (error) {
+            showNotification(`Error submitting: ${error.message}`);
+        } else {
+            showNotification('Test submitted successfully!');
+            hideModal(takeTestModal);
+        }
+    }
+
+    async function openSubmissionsModal(testId, testTitle) {
+        document.getElementById('submissionsTitle').textContent = `Submissions for: ${testTitle}`;
+        const container = document.getElementById('submissionsContainer');
+        container.innerHTML = '<p class="text-slate-400">Loading submissions...</p>';
+        showModal(viewSubmissionsModal);
+
+        const { data: testData, error: testError } = await supabase.from('online_tests').select('questions').eq('id', testId).single();
+        if(testError) { container.innerHTML = '<p class="text-red-400">Could not load test details.</p>'; return; }
+        const questions = testData.questions;
+
+        const { data: submissions, error } = await supabase.from('test_submissions').select('*, students(name, roll)').eq('test_id', testId);
+        if (error) { container.innerHTML = '<p class="text-red-400">Could not load submissions.</p>'; return; }
+
+        if (submissions.length === 0) {
+            container.innerHTML = '<p class="text-slate-400">No submissions for this test yet.</p>';
+            return;
+        }
+
+        container.innerHTML = submissions.map(sub => `
+            <div class="bg-slate-800 p-3 rounded-lg">
+                <h4 class="font-bold text-lg">${sub.students.name} (${sub.students.roll})</h4>
+                <div class="mt-2 space-y-3">
+                    ${sub.answers.map((ans, i) => {
+                        const q = questions[i];
+                        if (q.type === 'mcq') {
+                            const isCorrect = ans === q.correct_answer;
+                            return `
+                                <div class="text-sm p-2 bg-slate-900 rounded">
+                                    <p class="font-semibold">${i+1}. ${q.question}</p>
+                                    <p>Selected: <span class="${isCorrect ? 'text-green-400' : 'text-red-400'}">${q.options[ans] || 'Not Answered'}</span></p>
+                                    <p>Correct: <span class="text-green-400">${q.options[q.correct_answer]}</span></p>
+                                </div>`;
+                        } else { // subjective
+                            const analysisId = `analysis_${sub.id}_${i}`;
+                            return `
+                                <div class="text-sm p-2 bg-slate-900 rounded">
+                                    <p class="font-semibold">${i+1}. ${q.question}</p>
+                                    <p class="text-slate-400 mt-1">Student's Answer:</p>
+                                    <p class="p-2 bg-slate-700 rounded whitespace-pre-wrap">${ans || 'Not Answered'}</p>
+                                    <button class="btn btn-secondary text-xs mt-2" onclick="runSubmissionAnalysis('${q.question.replace(/'/g, `\\'`)}', '${q.model_answer.replace(/'/g, `\\'`)}', '${(ans||'').replace(/'/g, `\\'`)}', '${analysisId}')">
+                                        <i class="fas fa-magic"></i> Analyze with AI
+                                    </button>
+                                    <div id="${analysisId}" class="mt-2 text-xs p-2 bg-slate-800 rounded whitespace-pre-wrap font-mono text-slate-300 hidden"></div>
+                                </div>`;
+                        }
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function runSubmissionAnalysis(question, modelAnswer, studentAnswer, resultElementId) {
+        const resultDiv = document.getElementById(resultElementId);
+        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+
+        const prompt = `
+            You are an expert teacher. Evaluate the student's answer against the provided model answer/rubric. Provide a score out of 10 and concise, constructive feedback.
+            **Question:**\n${question}\n\n
+            **Model Answer:**\n${modelAnswer}\n\n
+            **Student's Answer:**\n${studentAnswer}`;
+        
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('API request failed');
+            const data = await response.json();
+            resultDiv.textContent = data.candidates[0].content.parts[0].text;
+        } catch (e) {
+            resultDiv.textContent = `Error: ${e.message}`;
+        }
+    }
+
+
+    window.addEventListener('load', () => {
+      document.getElementById('userTypeSelect').value = 'student';
+      document.getElementById('studentLoginFields').classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
