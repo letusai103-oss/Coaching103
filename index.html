@@ -42,6 +42,8 @@
     .chat-bubble{ padding:.75rem 1rem; border-radius:1rem; max-width:80%; line-height:1.5; }
     .chat-bubble.user{ background:#4f46e5; color:#fff; align-self:flex-end; border-bottom-right-radius:.25rem; }
     .chat-bubble.assistant{ background:#334155; color:#e2e8f0; align-self:flex-start; border-bottom-left-radius:.25rem; }
+    .chat-bubble.thinking{ animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     .announcement-important{ border-left:4px solid #f87171; background:rgba(248,113,113,.1); }
     .hl{ background: #fde047; color:#111827; padding:0 .15rem; border-radius:.2rem; }
     
@@ -100,11 +102,37 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    /* Crazy Animation Stars */
+    @keyframes move-twink-back {
+        from {background-position:0 0;}
+        to {background-position:-10000px 5000px;}
+    }
+    .stars, .twinkling {
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    .stars {
+      background:#000 url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
+      z-index:-2;
+    }
+    .twinkling{
+      background:transparent url(https://www.script-tutorials.com/demos/360/images/twinkling.png) repeat top center;
+      z-index:-1;
+      animation:move-twink-back 200s linear infinite;
+    }
   </style>
 </head>
 <body>
   <!-- BACKGROUND -->
   <div class="fixed inset-0 -z-10 h-full w-full bg-slate-950">
+    <div class="stars"></div>
+    <div class="twinkling"></div>
     <div class="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"></div>
     <div class="absolute left-0 right-0 top-[-10%] h-[1000px] w-[1000px] rounded-full bg-[radial-gradient(circle_400px_at_50%_300px,#fbfbfb36,#0f172a)]"></div>
   </div>
@@ -156,6 +184,20 @@
         <button id="confirmCancelBtn" class="btn btn-secondary">Cancel</button>
         <button id="confirmActionBtn" class="btn btn-danger">Confirm</button>
       </div>
+    </div>
+  </div>
+    
+  <div id="aiTutorModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-brain text-indigo-400"></i> AI Tutor</h2>
+        <div id="aiTutorChatWindow" class="chat-window mb-4">
+            <div class="chat-bubble assistant">Hello! I'm your AI Tutor. How can I help you with your studies today?</div>
+        </div>
+        <div class="flex gap-2">
+            <input id="aiTutorInput" type="text" class="w-full bg-slate-800 p-3 rounded-lg" placeholder="Ask a question...">
+            <button id="aiTutorSendBtn" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <button onclick="hideModal(document.getElementById('aiTutorModal'))" class="btn btn-secondary mt-4 w-full">Close Tutor</button>
     </div>
   </div>
 
@@ -329,9 +371,9 @@
                 <label class="block text-slate-400 mb-1">Topic / Syllabus</label>
                 <textarea id="aiTestTopic" class="w-full bg-slate-900 p-2 rounded-lg h-24" placeholder="e.g., Physics - Chapter 5: Magnetism, Class 12. Include topics like magnetic fields, Lorentz force, and electromagnets."></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-slate-400 mb-1">Number of Questions</label>
+                    <label class="block text-slate-400 mb-1"># Questions</label>
                     <input type="number" id="aiTestNumQuestions" class="w-full bg-slate-900 p-2 rounded-lg" value="5">
                 </div>
                 <div>
@@ -340,6 +382,14 @@
                         <option value="Easy">Easy</option>
                         <option value="Medium" selected>Medium</option>
                         <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Question Type</label>
+                    <select id="aiTestType" class="w-full bg-slate-900 p-2 rounded-lg">
+                        <option value="objective" selected>Multiple Choice</option>
+                        <option value="subjective">Subjective</option>
+                        <option value="mix">Mix</option>
                     </select>
                 </div>
             </div>
@@ -431,6 +481,7 @@
     const confirmationModal = document.getElementById('confirmationModal');
     const reportModal = document.getElementById('reportModal');
     const aiPaperAnalyzerModal = document.getElementById('aiPaperAnalyzerModal');
+    const aiTutorModal = document.getElementById('aiTutorModal');
     const editPerformanceModal = document.getElementById('editPerformanceModal');
     const editStudentDetailsModal = document.getElementById('editStudentDetailsModal');
     const addStudentModal = document.getElementById('addStudentModal');
@@ -513,7 +564,7 @@
       loginPage.classList.add('hidden');
       await renderStudentDashboard();
       studentDashboard.classList.remove('hidden');
-      checkForNudges(); // FIX: Check for nudges after student logs in.
+      checkForNudges();
     });
 
     document.getElementById('parentLoginBtn').addEventListener('click', async () => {
@@ -653,7 +704,6 @@
       Object.values(chartInstances).forEach(chart => chart.destroy());
       chartInstances = {};
 
-      // Show loading spinner immediately for better UX
       contentEl.innerHTML = loadingSpinner;
 
       controlsEl.innerHTML = `
@@ -668,7 +718,6 @@
         sectionSelect.onchange = (e)=>{ activeSection = e.target.value; showTeacherSection(sectionId); };
       }
 
-      // Using a try-catch block to handle potential errors during data fetching and rendering
       try {
         switch(sectionId){
             case 'home': titleEl.innerText='Dashboard Overview'; contentEl.innerHTML= await renderTeacherHome(); break;
@@ -692,20 +741,18 @@
     }
 
     async function renderTeacherHome(){
-        // PERFORMANCE: Fetch data in parallel
         const [studentsRes, perfRes, testsRes] = await Promise.all([
             supabase.from('students').select('roll, name, fee_status').eq('section', activeSection),
             supabase.from('performance').select('student_roll, score, test_id'),
-            supabase.from('online_tests').select('id, questions').eq('section', activeSection)
+            supabase.from('online_tests').select('id, questions, total_marks').eq('section', activeSection)
         ]);
 
         const students = studentsRes.data || [];
         const perf = perfRes.data || [];
         const tests = testsRes.data || [];
         
-        // Calculate total marks from the questions jsonb for percentage calculation
         const testsMap = new Map(tests.map(t => {
-            const totalMarks = (t.questions || []).reduce((sum, q) => sum + (q.marks || 1), 0);
+            const totalMarks = t.total_marks || (t.questions || []).reduce((sum, q) => sum + (q.marks || 1), 0);
             return [t.id, totalMarks];
         }));
 
@@ -741,7 +788,6 @@
             else scoreBrackets['N/A']++;
         });
 
-        // Defer chart rendering to ensure canvas element is in the DOM
         setTimeout(() => {
             const ctx = document.getElementById('classPerfChart')?.getContext('2d');
             if (ctx) {
@@ -831,8 +877,9 @@
           <td data-label="Parent Phone">${s.parent_phone || ''}</td>
           <td data-label="Fee"><span class="px-2 py-1 rounded-full text-xs font-semibold ${s.fee_status==='paid'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}">${s.fee_status||'due'}</span></td>
           <td data-label="Actions" class="space-x-2">
-            <button onclick="openStudentDetailsEdit('${s.roll}')" class="btn btn-secondary text-sm"><i class="fas fa-user-edit"></i></button>
-            <button onclick="deleteStudent('${s.roll}')" class="btn btn-danger text-sm"><i class="fas fa-trash"></i></button>
+            <button onclick="openStudentDetailsEdit('${s.roll}')" class="btn btn-secondary text-sm" title="Edit Details"><i class="fas fa-user-edit"></i></button>
+            <button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Hello, this is a message regarding ${s.name}.')" class="btn btn-whatsapp text-sm" title="Message Parent"><i class="fab fa-whatsapp"></i></button>
+            <button onclick="deleteStudent('${s.roll}')" class="btn btn-danger text-sm" title="Delete Student"><i class="fas fa-trash"></i></button>
           </td>
         </tr>`).join('');
 
@@ -874,7 +921,6 @@
         hideModal(addStudentModal);
         showNotification('Student added!');
         
-        // FIX: Add a small delay to allow the database to update before re-fetching
         setTimeout(() => {
             showTeacherSection('details');
         }, 500);
@@ -917,7 +963,6 @@
 
     async function deleteStudent(roll){
       showConfirmation(`Delete ${roll}? This will also delete all associated performance and attendance records.`, async () => {
-        // This should be handled by ON DELETE CASCADE in the database schema for cleaner deletion.
         const { error } = await supabase.from('students').delete().eq('roll', roll);
         if (error) return showNotification(`Delete failed: ${error.message}`);
         showNotification('Student deleted');
@@ -1001,7 +1046,7 @@
             
             await insertDPPRow({ title, date, link: link, section: activeSection });
             showNotification('DPP saved!');
-            await showTeacherSection('dpps'); // Refresh the section to show the new DPP
+            await showTeacherSection('dpps');
         } catch(e){ 
             showNotification('Save failed: ' + e.message); 
         } finally {
@@ -1561,6 +1606,7 @@
         { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
         { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
         { id:'teachers', name:'My Teachers', icon:'<i class="fas fa-chalkboard-teacher fa-fw mr-2"></i>' },
+        { id:'ai_tutor', name:'AI Tutor', icon:'<i class="fas fa-brain fa-fw mr-2"></i>' },
       ];
       studentDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
       attachSidebarListeners('student');
@@ -1587,6 +1633,7 @@
             case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
             case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
             case 'teachers': titleEl.innerText='My Teachers'; contentEl.innerHTML = await renderStudentTeachers(); break;
+            case 'ai_tutor': titleEl.innerText='AI Tutor'; contentEl.innerHTML = `<div class="bg-slate-800 p-4 rounded-lg"><p>Have a question? Ask our new AI Tutor for help with any subject!</p><button class="btn btn-primary mt-4" onclick="showModal(aiTutorModal)">Open AI Tutor</button></div>`; break;
             default: titleEl.innerText='Coming Soon'; contentEl.innerHTML='<p>Under construction.</p>';
         }
       } catch (error) {
@@ -1649,8 +1696,8 @@
             </div>`;
         
         setTimeout(() => {
-            const presentCount = attendanceRes.data.filter(a => a.status === 'P').length;
-            const absentCount = attendanceRes.data.filter(a => a.status === 'A').length;
+            const presentCount = (attendanceRes.data || []).filter(a => a.status === 'P').length;
+            const absentCount = (attendanceRes.data || []).filter(a => a.status === 'A').length;
             const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
             if (attendanceCtx) {
                 if(chartInstances.studentAttendanceChart) chartInstances.studentAttendanceChart.destroy();
@@ -1821,7 +1868,6 @@
             const nudgeMessages = nudges.map(n => n.message).join('\n');
             showNotification(nudgeMessages);
 
-            // Delete the nudges after showing them
             const nudgeIds = nudges.map(n => n.id);
             await supabase.from('nudges').delete().in('id', nudgeIds);
         }
@@ -1950,6 +1996,7 @@
         const type = data?.type || 'objective';
         const options = data?.options || ['', '', '', ''];
         const correctIndex = data?.correct_answer ?? -1;
+        const sampleAnswer = data?.sample_answer || '';
 
         questionDiv.innerHTML = `
             <div class="flex justify-between items-center">
@@ -1959,7 +2006,7 @@
                     <option value="subjective" ${type === 'subjective' ? 'selected' : ''}>Subjective</option>
                 </select>
             </div>
-            <input type="text" class="question-text w-full bg-slate-700 p-2 rounded-lg" placeholder="Question Text" value="${questionText}">
+            <textarea class="question-text w-full bg-slate-700 p-2 rounded-lg" placeholder="Question Text">${questionText}</textarea>
             <div class="options-container ${type === 'subjective' ? 'hidden' : ''}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     ${[0,1,2,3].map(i => `
@@ -1970,18 +2017,17 @@
                     `).join('')}
                 </div>
             </div>
-            <div class="subjective-placeholder ${type === 'objective' ? 'hidden' : ''}">
-                <p class="text-sm text-slate-500 p-2">Students will be given a text box to type their answer.</p>
+            <div class="subjective-container ${type === 'objective' ? 'hidden' : ''}">
+                 <textarea class="sample-answer-text w-full bg-slate-700 p-2 rounded-lg mt-2" placeholder="Optional: Add a sample/ideal answer for AI grading reference.">${sampleAnswer}</textarea>
             </div>
         `;
         document.getElementById('questionsContainer').appendChild(questionDiv);
 
-        // Add event listener to the new select element
         questionDiv.querySelector('.question-type-select').addEventListener('change', (e) => {
             const selectedType = e.target.value;
             const qDiv = e.target.closest('.p-3');
             qDiv.querySelector('.options-container').classList.toggle('hidden', selectedType === 'subjective');
-            qDiv.querySelector('.subjective-placeholder').classList.toggle('hidden', selectedType === 'objective');
+            qDiv.querySelector('.subjective-container').classList.toggle('hidden', selectedType === 'objective');
         });
     }
 
@@ -2012,13 +2058,19 @@
                 const correctIndex = qEl.querySelector('input[type="radio"]:checked')?.value;
 
                 if (options.some(o => !o)) {
-                    return showNotification(`Please fill all 4 options for Question #${qNum}.`);
+                    return showNotification(`Please fill all 4 options for Objective Question #${qNum}.`);
                 }
                 if (correctIndex === undefined) {
+                    // This is the fix for the user's main complaint.
                     return showNotification(`Please select the correct answer for Question #${qNum}.`);
                 }
                 questionData.options = options;
                 questionData.correct_answer = parseInt(correctIndex);
+            } else { // Subjective
+                const sampleAnswer = qEl.querySelector('.sample-answer-text').value.trim();
+                if (sampleAnswer) {
+                    questionData.sample_answer = sampleAnswer;
+                }
             }
             questions.push(questionData);
         }
@@ -2086,7 +2138,6 @@
                     <textarea name="q_${index}" class="w-full bg-slate-700 p-2 rounded-lg h-32" placeholder="Type your answer here..."></textarea>
                 </div>`;
             }
-            // Default to objective
             return `
                 <div class="space-y-2">
                     <p class="font-semibold">${index + 1}. ${q.question}</p>
@@ -2104,7 +2155,7 @@
         const submitBtn = document.getElementById('submitTestBtn');
         const newSubmitBtn = submitBtn.cloneNode(true);
         submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-        newSubmitBtn.onclick = () => submitTest(testId, test.questions);
+        newSubmitBtn.onclick = () => submitTest(test.id, test.questions);
 
         showModal(takeTestModal);
     }
@@ -2142,8 +2193,7 @@
             showNotification('Test submitted! The AI is now grading your answers...');
             hideModal(takeTestModal);
             
-            // Start AI grading in the background
-            autoGradeSubmission(submissionData.id, questions, answers);
+            autoGradeSubmission(submissionData.id, testId, questions, answers);
 
         } catch (error) {
             showNotification(`Error submitting: ${error.message}`);
@@ -2153,7 +2203,7 @@
         }
     }
 
-    async function autoGradeSubmission(submissionId, questions, answers) {
+    async function autoGradeSubmission(submissionId, testId, questions, answers) {
         if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
             console.warn("AI grading skipped: Gemini API key not set.");
             return;
@@ -2162,6 +2212,7 @@
         let scores = [];
         let feedback = [];
         let totalScore = 0;
+        let totalMarks = 0;
 
         for (let i = 0; i < questions.length; i++) {
             const question = questions[i];
@@ -2170,20 +2221,24 @@
             let fb = "N/A";
 
             if (question.type === 'objective') {
+                totalMarks += 1; // Assume 1 mark for objective
                 if (answer === question.correct_answer) {
-                    score = 1; // Assume 1 mark for correct objective questions
+                    score = 1; 
                     fb = "Correct";
                 } else {
                     score = 0;
                     fb = "Incorrect";
                 }
             } else if (question.type === 'subjective' && answer) {
+                totalMarks += 5; // Assume 5 marks for subjective
+                const sampleAnswerPrompt = question.sample_answer ? `An ideal answer might be: "${question.sample_answer}"` : '';
                 const prompt = `
                     You are an AI grading assistant.
                     Question: "${question.question}"
+                    ${sampleAnswerPrompt}
                     Student's Answer: "${answer}"
                     Please grade this answer out of 5 and provide brief feedback.
-                    Return your response as a JSON object with two keys: "score" (an integer) and "feedback" (a string).
+                    Return your response as a JSON object with two keys: "score" (an integer from 0 to 5) and "feedback" (a string).
                 `;
                 try {
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -2210,29 +2265,34 @@
             totalScore += score;
         }
 
-        // Update the submission record with scores and feedback
         const { error: updateError } = await supabase
             .from('test_submissions')
             .update({ scores, feedback, total_score: totalScore })
             .eq('id', submissionId);
         
-        if (updateError) {
-            console.error("Error updating submission with grades:", updateError);
-        }
+        if (updateError) console.error("Error updating submission with grades:", updateError);
 
-        // Also add a record to the main performance table for overall tracking
+        // **FIX:** Use the correct testId when inserting into the performance table.
         const { error: perfError } = await supabase
             .from('performance')
-            .insert({
+            .upsert({
                 student_roll: loggedInEntity.roll,
-                test_id: submissionId,
+                test_id: testId, // Use the actual test ID
                 score: totalScore,
-                subject: 'Online Test' // Generic subject for online tests
-            });
+                subject: 'Online Test',
+                teacher_id: loggedInEntity.id
+            }, { onConflict: 'student_roll, test_id' });
 
-        if (perfError) {
-            console.error("Error inserting into performance table:", perfError);
-        }
+        if (perfError) console.error("Error inserting into performance table:", perfError);
+
+        // Update total marks on the test itself if not already present
+        const { error: testUpdateError } = await supabase
+            .from('online_tests')
+            .update({ total_marks: totalMarks })
+            .eq('id', testId)
+            .is('total_marks', null); // Only update if it's not already set
+        
+        if (testUpdateError) console.error("Error updating total marks on test:", testUpdateError);
     }
 
 
@@ -2240,6 +2300,7 @@
         const topic = document.getElementById('aiTestTopic').value.trim();
         const numQuestions = document.getElementById('aiTestNumQuestions').value;
         const difficulty = document.getElementById('aiTestDifficulty').value;
+        const testType = document.getElementById('aiTestType').value;
         const statusDiv = document.getElementById('aiGeneratorStatus');
         const genBtn = document.getElementById('aiGenerateBtn');
 
@@ -2255,16 +2316,28 @@
         statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         genBtn.disabled = true;
 
-        const prompt = `Generate ${numQuestions} multiple-choice questions for a coaching center test.
+        let typeInstruction = '';
+        if (testType === 'objective') {
+            typeInstruction = `All questions should be multiple-choice. For each question, provide:
+            - The question text.
+            - An array of 4 options.
+            - The 0-indexed integer for the correct answer.
+            - A type field with the value "objective".`;
+        } else if (testType === 'subjective') {
+            typeInstruction = `All questions should be subjective (short answer). For each question, provide:
+            - The question text.
+            - A sample answer for the teacher's reference.
+            - A type field with the value "subjective".`;
+        } else { // mix
+            typeInstruction = `Generate a mix of multiple-choice and subjective questions.
+            For multiple-choice questions, provide: question, 4 options, the 0-indexed correct answer, and type: "objective".
+            For subjective questions, provide: question, a sample answer, and type: "subjective".`;
+        }
+
+        const prompt = `Generate ${numQuestions} questions for a coaching center test.
         Topic: ${topic}
         Difficulty: ${difficulty}
-        
-        For each question, provide:
-        - The question text.
-        - An array of 4 options.
-        - The 0-indexed integer for the correct answer.
-        - A type field with the value "objective".
-        
+        ${typeInstruction}
         Return the output as a JSON object with a single key "questions" which is an array of these question objects.`;
 
         try {
@@ -2330,18 +2403,23 @@
         
         const studentMap = new Map((students || []).map(s => [s.roll, s.name]));
 
-        listDiv.innerHTML = submissions.map(sub => `
+        listDiv.innerHTML = submissions.map(sub => {
+            const scoreText = sub.total_score === null 
+                ? '<span class="text-yellow-400">AI Grading...</span>' 
+                : sub.total_score;
+            return `
             <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-center">
                 <div>
                     <p class="font-semibold">${studentMap.get(sub.student_roll) || sub.student_roll}</p>
                     <p class="text-sm text-slate-400">Submitted on: ${new Date(sub.created_at).toLocaleString()}</p>
                 </div>
                 <div class="text-right">
-                    <p class="font-bold text-lg">${sub.total_score ?? 'Not Graded'}</p>
+                    <p class="font-bold text-lg">${scoreText}</p>
                     <p class="text-xs text-slate-400">Total Score</p>
                 </div>
             </div>
-        `).join('');
+            `
+        }).join('');
     }
 
     async function openOfflineTestModal() {
@@ -2379,7 +2457,6 @@
         saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
 
         try {
-            // 1. Create a record for the offline test itself
             const { data: testData, error: testError } = await supabase
                 .from('online_tests')
                 .insert({
@@ -2394,13 +2471,12 @@
 
             if (testError) throw testError;
 
-            // 2. Collect and insert performance records for each student
             const inputs = document.querySelectorAll('#offlineStudentMarksContainer input[data-roll]');
             const performanceRecords = [];
             inputs.forEach(input => {
                 const roll = input.dataset.roll;
                 const score = input.value.trim();
-                if (score !== '') { // Only add records for students who have a score
+                if (score !== '') {
                     performanceRecords.push({
                         student_roll: roll,
                         test_id: testData.id,
@@ -2428,6 +2504,63 @@
         }
     }
 
+    // --- AI Tutor Logic ---
+    const aiTutorSendBtn = document.getElementById('aiTutorSendBtn');
+    const aiTutorInput = document.getElementById('aiTutorInput');
+
+    const handleTutorSend = async () => {
+        const query = aiTutorInput.value.trim();
+        if (!query) return;
+
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            showNotification('The AI Tutor is not configured. Please contact your administrator.');
+            return;
+        }
+
+        aiTutorInput.value = '';
+        aiTutorSendBtn.disabled = true;
+        
+        const chatWindow = document.getElementById('aiTutorChatWindow');
+        const userBubble = document.createElement('div');
+        userBubble.className = 'chat-bubble user';
+        userBubble.textContent = query;
+        chatWindow.appendChild(userBubble);
+        
+        const assistantBubble = document.createElement('div');
+        assistantBubble.className = 'chat-bubble assistant thinking';
+        assistantBubble.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        chatWindow.appendChild(assistantBubble);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        const prompt = `You are a friendly and encouraging AI Tutor for a high school student in India. Your student is studying subjects like Physics, Chemistry, Maths, and Biology. Explain concepts clearly, simply, and concisely. If asked a complex question, break it down.
+        Student's question: "${query}"`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('Failed to get response from AI Tutor.');
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            assistantBubble.textContent = text;
+            assistantBubble.classList.remove('thinking');
+        } catch (e) {
+            assistantBubble.textContent = `Sorry, I encountered an error: ${e.message}`;
+            assistantBubble.classList.remove('thinking');
+        } finally {
+            aiTutorSendBtn.disabled = false;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    };
+
+    aiTutorSendBtn.addEventListener('click', handleTutorSend);
+    aiTutorInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleTutorSend();
+        }
+    });
 
     window.addEventListener('load', () => {
       document.getElementById('userTypeSelect').value = 'student';
@@ -2436,4 +2569,3 @@
   </script>
 </body>
 </html>
-
