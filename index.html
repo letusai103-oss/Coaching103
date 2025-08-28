@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coaching Centre Portal — Supabase</title>
+  <title>Coaching Centre Portal — Enhanced</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -438,10 +438,9 @@
 
 
   <script>
-  const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
+const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
     const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4"; // IMPORTANT: Replace with your actual Gemini API Key
-
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
     if (!__SUPABASE_URL || !__SUPABASE_ANON_KEY) {
@@ -1685,7 +1684,7 @@
     async function renderStudentPerformance(){
         const roll = loggedInEntity.roll;
         const [perfRes, teachersRes, testsRes, attendanceRes] = await Promise.all([
-            supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll),
+            supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll).order('created_at', { ascending: false }),
             supabase.from('teachers').select('id,name').eq('section', activeSection),
             supabase.from('online_tests').select('id, title, created_at, total_marks').eq('section', activeSection),
             supabase.from('attendance').select('status').eq('student_roll', roll)
@@ -1696,29 +1695,6 @@
         const tMap = new Map((teachersRes.data || []).map(t => [t.id, t.name]));
         const testsMap = new Map(tests.map(t => [t.id, t]));
 
-        const now = new Date();
-        const todayStr = now.toISOString().slice(0, 10);
-        const thisMonthStr = now.toISOString().slice(0, 7);
-        const thisYearStr = now.getFullYear().toString();
-
-        const dailyPerf = performanceData.filter(p => p.created_at.slice(0, 10) === todayStr);
-        const monthlyPerf = performanceData.filter(p => p.created_at.slice(0, 7) === thisMonthStr);
-        const yearlyPerf = performanceData.filter(p => p.created_at.slice(0, 4) === thisYearStr);
-
-        const calculateAverage = (perfArray) => {
-            if (perfArray.length === 0) return 'N/A';
-            let totalScore = 0;
-            let totalMaxScore = 0;
-            perfArray.forEach(p => {
-                const test = testsMap.get(p.test_id);
-                if (test && test.total_marks) {
-                    totalScore += p.score;
-                    totalMaxScore += test.total_marks;
-                }
-            });
-            return totalMaxScore > 0 ? `${((totalScore / totalMaxScore) * 100).toFixed(1)}%` : 'N/A';
-        };
-
         const chartContainer = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="bg-slate-800 p-4 rounded-lg">
@@ -1726,38 +1702,73 @@
                     <canvas id="studentAttendanceChart"></canvas>
                 </div>
                 <div class="bg-slate-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-bold text-center mb-2">Performance Summary</h3>
-                    <div class="flex justify-around items-center h-full text-center">
-                        <div><p class="text-3xl font-bold text-indigo-400">${calculateAverage(dailyPerf)}</p><p class="text-slate-400">Today</p></div>
-                        <div><p class="text-3xl font-bold text-cyan-400">${calculateAverage(monthlyPerf)}</p><p class="text-slate-400">This Month</p></div>
-                        <div><p class="text-3xl font-bold text-emerald-400">${calculateAverage(yearlyPerf)}</p><p class="text-slate-400">This Year</p></div>
-                    </div>
+                    <h3 class="text-lg font-bold text-center mb-2">Recent Test Scores (%)</h3>
+                    <canvas id="studentPerformanceChart"></canvas>
                 </div>
             </div>`;
         
         setTimeout(() => {
+            // Attendance Chart
             const presentCount = (attendanceRes.data || []).filter(a => a.status === 'P').length;
             const absentCount = (attendanceRes.data || []).filter(a => a.status === 'A').length;
             const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
             if (attendanceCtx) {
                 if(chartInstances.studentAttendanceChart) chartInstances.studentAttendanceChart.destroy();
                 chartInstances.studentAttendanceChart = new Chart(attendanceCtx, {
-                    type: 'pie',
+                    type: 'doughnut',
                     data: {
                         labels: ['Present', 'Absent'],
-                        datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'] }]
+                        datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'], borderColor: '#1e293b', borderWidth: 4 }]
                     },
                     options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
                 });
             }
-        }, 0);
 
-        const recentTests = performanceData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+            // Performance Chart
+            const recentPerf = performanceData.slice(0, 5).reverse(); // last 5 tests, reversed for chronological chart
+            const perfCtx = document.getElementById('studentPerformanceChart')?.getContext('2d');
+            if (perfCtx) {
+                const chartData = {
+                    labels: [],
+                    datasets: [{
+                        label: 'Score %',
+                        data: [],
+                        backgroundColor: 'rgba(79, 70, 229, 0.5)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                };
+
+                recentPerf.forEach(p => {
+                    const test = testsMap.get(p.test_id);
+                    if (test && test.total_marks > 0 && p.score !== null) {
+                        chartData.labels.push(test.title);
+                        chartData.datasets[0].data.push((p.score / test.total_marks) * 100);
+                    }
+                });
+
+                if(chartInstances.studentPerformanceChart) chartInstances.studentPerformanceChart.destroy();
+                chartInstances.studentPerformanceChart = new Chart(perfCtx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' } },
+                            x: { ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }, 0);
 
         return `
             ${chartContainer}
             <div class="bg-slate-800 p-4 rounded-lg">
-                <h3 class="text-xl font-bold mb-3">Recent Test Performance</h3>
+                <h3 class="text-xl font-bold mb-3">Detailed Performance History</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
@@ -1765,21 +1776,25 @@
                                 <th class="p-2">Test Name</th>
                                 <th class="p-2">Subject</th>
                                 <th class="p-2">Score</th>
+                                <th class="p-2">Percentage</th>
                                 <th class="p-2">Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${recentTests.map(p => {
+                            ${performanceData.map(p => {
                                 const test = testsMap.get(p.test_id);
+                                const totalMarks = test?.total_marks;
+                                const percentage = (totalMarks > 0 && p.score !== null) ? `${((p.score / totalMarks) * 100).toFixed(1)}%` : 'N/A';
                                 return `
                                 <tr class="border-b border-slate-700">
                                     <td class="p-2">${test?.title || 'Offline Test'}</td>
                                     <td class="p-2">${p.subject}</td>
-                                    <td class="p-2">${p.score} / ${test?.total_marks || 'N/A'}</td>
+                                    <td class="p-2 font-mono">${p.score ?? 'N/A'} / ${totalMarks || 'N/A'}</td>
+                                    <td class="p-2 font-bold ${percentage.startsWith('N') ? '' : (parseFloat(percentage) >= 75 ? 'text-green-400' : (parseFloat(percentage) >= 50 ? 'text-yellow-400' : 'text-red-400'))}">${percentage}</td>
                                     <td class="p-2">${new Date(p.created_at).toLocaleDateString()}</td>
                                 </tr>
                                 `
-                            }).join('') || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No performance records yet.</td></tr>'}
+                            }).join('') || '<tr><td colspan="5" class="p-4 text-center text-slate-400">No performance records yet.</td></tr>'}
                         </tbody>
                     </table>
                 </div>
@@ -1833,7 +1848,7 @@
             <div class="bg-slate-800 p-4 rounded-lg">
               <h3 class="text-xl font-bold">${t.name}</h3>
               <p class="text-slate-400">Subject: ${t.subject}</p>
-              ${t.whatsapp ? `<button class="btn btn-whatsapp mt-2" onclick="sendWhatsAppDeepLink('${t.whatsapp}','Hello ${t.name}, I have a query.')"><i class="fab fa-whatsapp"></i> Message</button>` : ''}
+              ${t.whatsapp ? `<button class="btn btn-whatsapp mt-2" onclick="sendWhatsAppDeepLink('${t.whatsapp}','Hello ${t.name}, I have a query.')"><i class="fab fa-whatsapp"></i> Contact Teacher</button>` : ''}
             </div>
           `).join('')}
         </div>`;
@@ -1846,6 +1861,7 @@
         { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
         { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
         { id:'attendance', name:"Child's Attendance", icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
+        { id:'teachers', name:'Contact Teachers', icon:'<i class="fas fa-chalkboard-teacher fa-fw mr-2"></i>' }, // New section for parents
         { id:'materials', name:'Class Materials', icon:'<i class="fas fa-book-open fa-fw mr-2"></i>' },
         { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
         { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
@@ -1872,6 +1888,7 @@
             case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(true); break; // Pass true for parent view
             case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderStudentDPPsView(); break;
             case 'attendance': titleEl.innerText="Child's Attendance"; contentEl.innerHTML = await renderStudentAttendance(); break;
+            case 'teachers': titleEl.innerText='Contact Teachers'; contentEl.innerHTML = await renderStudentTeachers(); break; // Re-use the same function
             case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
             case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
             case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
@@ -2029,7 +2046,6 @@
     let questionCount = 0;
     function addQuestionToCreator(data = null) {
         questionCount++;
-        const questionId = `q${questionCount}`;
         const questionDiv = document.createElement('div');
         questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2';
         
@@ -2047,7 +2063,7 @@
         questionDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <p class="font-bold text-slate-400">Question ${questionCount}</p>
-                <select class="question-type-select bg-slate-700 p-1 rounded text-sm" data-question-id="${questionId}">
+                <select class="question-type-select bg-slate-700 p-1 rounded text-sm">
                     <option value="objective" ${type === 'objective' ? 'selected' : ''}>Objective</option>
                     <option value="subjective" ${type === 'subjective' ? 'selected' : ''}>Subjective</option>
                 </select>
@@ -2057,8 +2073,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     ${[0,1,2,3].map(i => `
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="correct_${questionId}" value="${i}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600" ${i === correctIndex ? 'checked' : ''}>
-                            <input type="text" class="option-input w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${options[i]}">
+                            <input type="radio" name="correct_q${questionCount}" value="${i}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600" ${i === correctIndex ? 'checked' : ''}>
+                            <input type="text" class="option-input w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${options[i] || ''}">
                         </div>
                     `).join('')}
                 </div>
@@ -2101,7 +2117,6 @@
 
             if (type === 'objective') {
                 const options = [...qEl.querySelectorAll('.option-input')].map(opt => opt.value.trim());
-                // FIX: Correctly reference the dynamically created radio button name
                 const correctIndex = qEl.querySelector(`input[name="correct_q${qNum}"]:checked`)?.value;
 
                 if (options.some(o => !o)) {
@@ -2366,22 +2381,21 @@
         let typeInstruction = '';
         if (testType === 'objective') {
             typeInstruction = `All questions should be multiple-choice. For each question, provide:
-            - The question text.
-            - An array of 4 options.
-            - The 0-indexed integer for the correct answer.
+            - The question text as "question".
+            - An array of 4 string options as "options".
+            - The 0-indexed integer for the correct answer as "correct_answer".
             - A type field with the value "objective".`;
         } else if (testType === 'subjective') {
             typeInstruction = `All questions should be subjective (short answer). For each question, provide:
-            - The question text.
-            - A sample answer for the teacher's reference.
+            - The question text as "question".
+            - A sample answer for the teacher's reference as "sample_answer".
             - A type field with the value "subjective".`;
         } else { // mix
             typeInstruction = `Generate a mix of multiple-choice and subjective questions.
-            For multiple-choice questions, provide: question, 4 options, the 0-indexed correct answer, and type: "objective".
-            For subjective questions, provide: question, a sample answer, and type: "subjective".`;
+            For multiple-choice questions, provide: "question", "options" (array of 4 strings), "correct_answer" (0-indexed integer), and type: "objective".
+            For subjective questions, provide: "question", "sample_answer", and type: "subjective".`;
         }
         
-        // FIX: Added stricter instruction to the prompt
         const prompt = `Generate ${numQuestions} questions for a coaching center test.
         Topic: ${topic}
         Difficulty: ${difficulty}
