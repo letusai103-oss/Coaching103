@@ -47,85 +47,25 @@
     .announcement-important{ border-left:4px solid #f87171; background:rgba(248,113,113,.1); }
     .hl{ background: #fde047; color:#111827; padding:0 .15rem; border-radius:.2rem; }
     
-    .login-box-animated {
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .login-box-animated:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 30px rgba(0,0,0,0.4);
-    }
-    .login-box-animated::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 1rem;
-      padding: 2px;
-      background: linear-gradient(45deg, #4f46e5, #a855f7, #ec4899, #f59e0b);
-      background-size: 400% 400%;
-      animation: gradient-animation 5s ease infinite;
-      -webkit-mask: 
-         linear-gradient(#fff 0 0) content-box, 
-         linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      z-index: -1;
-    }
-    @keyframes gradient-animation {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .login-input {
-        transition: all 0.2s ease-in-out;
-    }
-    .login-input:focus {
-        transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
-    }
-    .loader {
-        width: 48px;
-        height: 48px;
-        border: 5px solid #FFF;
-        border-bottom-color: #4f46e5;
-        border-radius: 50%;
-        display: inline-block;
-        box-sizing: border-box;
-        animation: rotation 1s linear infinite;
-        margin: 2rem auto;
-    }
-    @keyframes rotation {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    /* Crazy Animation Stars */
-    @keyframes move-twink-back {
-        from {background-position:0 0;}
-        to {background-position:-10000px 5000px;}
-    }
-    .stars, .twinkling {
-      position:absolute;
-      top:0;
-      left:0;
-      right:0;
-      bottom:0;
-      width:100%;
-      height:100%;
-      display:block;
-    }
-    .stars {
-      background:#000 url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
-      z-index:-2;
-    }
-    .twinkling{
-      background:transparent url(https://www.script-tutorials.com/demos/360/images/twinkling.png) repeat top center;
-      z-index:-1;
-      animation:move-twink-back 200s linear infinite;
-    }
+    .login-box-animated { position: relative; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .login-box-animated:hover { transform: translateY(-5px); box-shadow: 0 20px 30px rgba(0,0,0,0.4); }
+    .login-box-animated::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 1rem; padding: 2px; background: linear-gradient(45deg, #4f46e5, #a855f7, #ec4899, #f59e0b); background-size: 400% 400%; animation: gradient-animation 5s ease infinite; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; z-index: -1; }
+    @keyframes gradient-animation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .login-input { transition: all 0.2s ease-in-out; }
+    .login-input:focus { transform: scale(1.02); box-shadow: 0 0 15px rgba(79, 70, 229, 0.5); }
+    .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: #4f46e5; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; margin: 2rem auto; }
+    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* Star Background */
+    @keyframes move-twink-back { from {background-position:0 0;} to {background-position:-10000px 5000px;} }
+    .stars, .twinkling { position:absolute; top:0; left:0; right:0; bottom:0; width:100%; height:100%; display:block; }
+    .stars { background:#000 url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center; z-index:-2; }
+    .twinkling{ background:transparent url(https://www.script-tutorials.com/demos/360/images/twinkling.png) repeat top center; z-index:-1; animation:move-twink-back 200s linear infinite; }
+    /* AI Animated Icon */
+    .ai-animated-icon { animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+    /* Achievement Badge */
+    .badge { filter: grayscale(100%); opacity: 0.5; transition: all 0.3s ease; }
+    .badge.unlocked { filter: grayscale(0%); opacity: 1; }
   </style>
 </head>
 <body>
@@ -186,10 +126,20 @@
       </div>
     </div>
   </div>
+
+  <div id="paymentDetailsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-4">AI Verification Details</h2>
+      <div id="paymentDetailsContent" class="bg-slate-900 p-4 rounded-lg space-y-2"></div>
+      <div class="flex justify-end mt-4">
+        <button onclick="hideModal(document.getElementById('paymentDetailsModal'))" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
     
   <div id="aiTutorModal" class="modal-overlay">
     <div class="modal-content">
-        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-brain text-indigo-400"></i> AI Tutor</h2>
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-brain text-indigo-400 ai-animated-icon"></i> AI Tutor</h2>
         <div id="aiTutorChatWindow" class="chat-window mb-4">
             <div class="chat-bubble assistant">Hello! I'm your AI Tutor. How can I help you with your studies today?</div>
         </div>
@@ -217,7 +167,7 @@
     
   <div id="aiPaperAnalyzerModal" class="modal-overlay">
     <div class="modal-content">
-      <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-magic text-indigo-400"></i>AI Paper Analyzer</h2>
+      <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 ai-animated-icon"></i>AI Paper Analyzer</h2>
       <div class="space-y-4">
         <div>
           <label class="block text-slate-400 mb-1">Question</label>
@@ -261,6 +211,8 @@
         <div><label class="block text-slate-400">Roll Number</label><input type="text" id="editDetailRoll" class="w-full bg-slate-700 p-2 rounded-lg" disabled></div>
         <div><label class="block text-slate-400">Parent's Phone</label><input type="text" id="editDetailParentPhone" class="w-full bg-slate-700 p-2 rounded-lg"></div>
         <div><label class="block text-slate-400">Student PIN</label><input type="text" id="editDetailStudentPin" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Monthly Fee Amount</label><input type="number" id="editDetailFeeAmount" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Fee Due Day (1-31)</label><input type="number" id="editDetailFeeDueDay" min="1" max="31" class="w-full bg-slate-700 p-2 rounded-lg"></div>
       </div>
       <div class="flex justify-end space-x-2 mt-6">
         <button id="editDetailCancelBtn" class="btn btn-secondary">Cancel</button>
@@ -280,6 +232,8 @@
         <div><label class="block text-slate-400">Roll (e.g., 12A-01)</label><input type="text" id="addStudentRoll" class="w-full bg-slate-700 p-2 rounded-lg"></div>
         <div><label class="block text-slate-400">Initial PIN</label><input type="text" id="addStudentPin" class="w-full bg-slate-700 p-2 rounded-lg"></div>
         <div><label class="block text-slate-400">Parent's Phone (10 digits)</label><input type="text" id="addStudentParentPhone" class="w-full bg-slate-700 p-2 rounded-lg"></div>
+        <div><label class="block text-slate-400">Monthly Fee Amount</label><input type="number" id="addStudentFeeAmount" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="e.g., 5000"></div>
+        <div><label class="block text-slate-400">Fee Due Day (1-31)</label><input type="number" id="addStudentFeeDueDay" class="w-full bg-slate-700 p-2 rounded-lg" min="1" max="31" placeholder="e.g., 15"></div>
       </div>
       <div class="flex justify-end space-x-2 mt-6">
         <button onclick="hideModal(document.getElementById('addStudentModal'))" class="btn btn-secondary">Cancel</button>
@@ -323,6 +277,16 @@
     </div>
   </div>
   
+  <div id="aiFeedbackModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-robot text-indigo-400 ai-animated-icon"></i> AI Test Feedback</h2>
+        <div id="aiFeedbackContent" class="bg-slate-900 p-4 rounded-lg space-y-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap"></div>
+        <div class="flex justify-end mt-4">
+            <button onclick="hideModal(document.getElementById('aiFeedbackModal'))" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
   <div id="marksEntryModal" class="modal-overlay">
     <div class="modal-content">
         <h2 id="marksModalTitle" class="text-2xl font-bold mb-4">Enter Marks</h2>
@@ -365,7 +329,7 @@
   
   <div id="aiTestGeneratorModal" class="modal-overlay">
     <div class="modal-content">
-        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-robot text-indigo-400"></i>AI Test Generator</h2>
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-robot text-indigo-400 ai-animated-icon"></i>AI Test Generator</h2>
         <div class="space-y-4">
             <div>
                 <label class="block text-slate-400 mb-1">Topic / Syllabus</label>
@@ -420,13 +384,11 @@
           <div class="space-y-4">
               <input id="offlineTestTitle" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Test Title (e.g., Mid-Term Physics)">
               <input id="offlineTestTotalMarks" type="number" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="Total Marks">
-              <!-- NEW: File upload for offline test paper -->
               <div>
                 <label class="block text-slate-400 mb-1">Upload Test Paper (Image/PDF, Optional)</label>
                 <input id="offlineTestFile" type="file" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
               </div>
               <div id="offlineStudentMarksContainer" class="space-y-2 max-h-[40vh] overflow-y-auto p-2 bg-slate-800 rounded-lg">
-                  <!-- Student marks entry will be populated here -->
               </div>
           </div>
           <div class="flex justify-end space-x-2 mt-6">
@@ -438,9 +400,11 @@
 
 
   <script>
-const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
+    // --- SUPABASE & API CONFIG ---
+    const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmlmZnJncWtuaHpsd2h2c3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNjA2NjEsImV4cCI6MjA3MTkzNjY2MX0.Mrto_xMcCMz9xE9AjrqpUPkcYnn6h8vE3wqJcAIXAeA";
     const GEMINI_API_KEY = "AIzaSyAMi2EJAzRrDIS8hiWE3_lUJnO0aLYBdf4"; // IMPORTANT: Replace with your actual Gemini API Key
+
     const __SUPABASE_URL = (window.__ENV && window.__ENV.SUPABASE_URL) || SUPABASE_URL;
     const __SUPABASE_ANON_KEY = (window.__ENV && window.__ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
     if (!__SUPABASE_URL || !__SUPABASE_ANON_KEY) {
@@ -448,10 +412,10 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     }
     const supabase = window.supabase.createClient(__SUPABASE_URL, __SUPABASE_ANON_KEY);
 
+    // --- GLOBAL STATE & UTILS ---
     const BUCKETS = { tests: 'tests', dpps: 'dpps', materials: 'materials' };
     const sanitizeFilename = (name) => String(name||'').replace(/\s+/g,'-').replace(/[^a-zA-Z0-9._-]/g,'').toLowerCase();
     
-    // FIX: Added storage_path to return object for easier deletion
     async function uploadToBucket(file, bucket, section){
       try{
         if(!file) throw new Error('No file selected');
@@ -475,9 +439,8 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     let activeSection = '12A';
     let chartInstances = {};
     const loadingSpinner = `<div class="flex justify-center items-center h-64"><div class="loader"></div></div>`;
-
-
-    // Modal references
+    
+    // --- MODAL MANAGEMENT ---
     const loginPage = document.getElementById('loginPage');
     const teacherDashboard = document.getElementById('teacherDashboard');
     const studentDashboard = document.getElementById('studentDashboard');
@@ -499,7 +462,8 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     const aiTestGeneratorModal = document.getElementById('aiTestGeneratorModal');
     const viewSubmissionsModal = document.getElementById('viewSubmissionsModal');
     const offlineTestModal = document.getElementById('offlineTestModal');
-
+    const paymentDetailsModal = document.getElementById('paymentDetailsModal');
+    const aiFeedbackModal = document.getElementById('aiFeedbackModal');
 
     const showModal = (m) => m.style.display = 'flex';
     const hideModal = (m) => m.style.display = 'none';
@@ -518,6 +482,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       showModal(confirmationModal);
     };
 
+    // --- WHATSAPP & PHONE UTILS ---
     const sendWhatsAppDeepLink = (phone, message) => {
       if (!phone) { showNotification("Phone number is not available."); return; }
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -527,72 +492,197 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       window.open(url, "_blank");
     };
-    
     const formatPhoneNumber = (phone) => {
         const cleaned = (phone || '').replace(/\D/g, '');
-        if (cleaned.length === 10) return `+91${cleaned}`;
-        if (cleaned.length === 12 && cleaned.startsWith('91')) return `+${cleaned}`;
+        if (cleaned.length === 10) return `91${cleaned}`; // Ensure it has country code for wa.me
+        if (cleaned.length === 12 && cleaned.startsWith('91')) return `${cleaned}`;
         return phone;
     };
 
+    // --- LOGIN & AUTHENTICATION ---
     document.getElementById('userTypeSelect').addEventListener('change', (e) => {
       ['teacherLoginFields','studentLoginFields','parentLoginFields'].forEach(id => document.getElementById(id).classList.add('hidden'));
       document.getElementById(`${e.target.value}LoginFields`).classList.remove('hidden');
     });
 
-    document.getElementById('teacherLoginBtn').addEventListener('click', async () => {
-      const pin = document.getElementById('teacherPinInput').value.trim();
-      if (!pin) return showNotification('Please enter PIN.');
-      let { data, error } = await supabase.from('teachers').select('*').eq('teacher_pin', pin).limit(1);
-      if (!error && (!data || data.length===0)){
-        ({ data, error } = await supabase.from('teachers').select('*').eq('pin', pin).limit(1));
-      }
-      if (error) return showNotification(`Login failed: ${error.message}`);
-      if (!data || data.length === 0) return showNotification('Invalid PIN.');
-      loggedInUserType = 'teacher';
-      loggedInEntity = data[0];
-      activeSection = loggedInEntity.section;
-      loginPage.classList.add('hidden');
-      await renderTeacherDashboard();
-      teacherDashboard.classList.remove('hidden');
-    });
+    const handleLogin = async (userType, pin) => {
+        if (!pin) return showNotification('Please enter PIN.');
+        
+        let tableName = userType === 'teacher' ? 'teachers' : 'students';
+        let pinColumn = userType === 'teacher' ? 'teacher_pin' : 'student_pin';
+        
+        let { data, error } = await supabase.from(tableName).select('*').eq(pinColumn, pin).limit(1);
 
-    document.getElementById('studentLoginBtn').addEventListener('click', async () => {
-      const pin = document.getElementById('studentPinInput').value.trim();
-      if (!pin) return showNotification('Please enter your PIN.');
-      const { data, error } = await supabase.from('students').select('*').eq('student_pin', pin).limit(1);
-      if (error) return showNotification(`Login failed: ${error.message}`);
-      if (!data || data.length === 0) return showNotification('Invalid PIN.');
-      loggedInUserType = 'student';
-      loggedInEntity = data[0];
-      activeSection = loggedInEntity.section;
-      loginPage.classList.add('hidden');
-      await renderStudentDashboard();
-      studentDashboard.classList.remove('hidden');
-      checkForNudges();
-    });
+        if (error) return showNotification(`Login failed: ${error.message}`);
+        if (!data || data.length === 0) return showNotification('Invalid PIN.');
+        
+        loggedInUserType = userType;
+        loggedInEntity = data[0];
+        
+        // ** NEW: Check and reset fee status on login for students/parents **
+        if(userType !== 'teacher') {
+            await checkAndResetFeeStatus(loggedInEntity);
+            // Refresh loggedInEntity data after potential update
+            const { data: updatedEntity } = await supabase.from('students').select('*').eq('roll', loggedInEntity.roll).single();
+            loggedInEntity = updatedEntity;
+        }
 
-    document.getElementById('parentLoginBtn').addEventListener('click', async () => {
-      const pin = document.getElementById('parentPinInput').value.trim();
-      if (!pin) return showNotification("Please enter your child's PIN.");
-      const { data, error } = await supabase.from('students').select('*').eq('student_pin', pin).limit(1);
-      if (error) return showNotification(`Login failed: ${error.message}`);
-      if (!data || data.length === 0) return showNotification('Child not found with this PIN.');
-      loggedInUserType = 'parent';
-      loggedInEntity = data[0];
-      activeSection = loggedInEntity.section;
-      loginPage.classList.add('hidden');
-      await renderParentDashboard();
-      parentDashboard.classList.remove('hidden');
+        activeSection = loggedInEntity.section;
+        loginPage.classList.add('hidden');
+
+        if (userType === 'teacher') {
+            await renderTeacherDashboard();
+            teacherDashboard.classList.remove('hidden');
+        } else if (userType === 'student') {
+            await renderStudentDashboard();
+            studentDashboard.classList.remove('hidden');
+            checkForNudges();
+        } else { // parent
+            loggedInUserType = 'parent'; // Ensure correct type for parents
+            await renderParentDashboard();
+            parentDashboard.classList.remove('hidden');
+        }
+    };
+    
+    document.getElementById('teacherLoginBtn').addEventListener('click', () => handleLogin('teacher', document.getElementById('teacherPinInput').value.trim()));
+    document.getElementById('studentLoginBtn').addEventListener('click', () => handleLogin('student', document.getElementById('studentPinInput').value.trim()));
+    document.getElementById('parentLoginBtn').addEventListener('click', () => handleLogin('parent', document.getElementById('parentPinInput').value.trim()));
+
+    // Keyboard login flow
+    ['userTypeSelect', 'teacherPinInput', 'studentPinInput', 'parentPinInput'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (id === 'userTypeSelect') {
+                    const currentType = document.getElementById('userTypeSelect').value;
+                    document.getElementById(`${currentType}PinInput`).focus();
+                } else {
+                    const btnId = id.replace('PinInput', 'LoginBtn');
+                    document.getElementById(btnId).click();
+                }
+            }
+        });
     });
 
     const logout = () => {
       loggedInUserType = null;
       loggedInEntity = null;
-      [teacherDashboard, studentDashboard, parentDashboard].forEach(d => d.classList.add('hidden'));
+      [teacherDashboard, studentDashboard, parentDashboard].forEach(d => {
+          d.classList.add('hidden');
+          d.innerHTML = '';
+      });
       loginPage.classList.remove('hidden');
     };
+    
+    // --- DYNAMIC FEE LOGIC ---
+    
+    async function checkAndResetFeeStatus(student) {
+        const lastReset = student.last_fee_reset ? new Date(student.last_fee_reset) : null;
+        const now = new Date();
+        
+        // If never reset, or if the last reset was in a previous month, reset the fee status.
+        if (!lastReset || lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear()) {
+             const { error } = await supabase
+                .from('students')
+                .update({ 
+                    fee_status: 'due',
+                    last_fee_reset: now.toISOString() 
+                })
+                .eq('roll', student.roll);
+            if (error) console.error(`Failed to reset fee status for ${student.roll}:`, error);
+        }
+    }
 
+    async function simulatePayment() {
+        showNotification("Processing your payment confirmation...");
+        const { data, error } = await supabase.from('payments').insert({
+            student_roll: loggedInEntity.roll,
+            amount: loggedInEntity.fee_amount || 0,
+            status: 'pending_verification'
+        }).select().single();
+
+        if (error) {
+            return showNotification(`Error recording payment: ${error.message}`);
+        }
+
+        await supabase.from('students').update({ fee_status: 'processing' }).eq('roll', loggedInEntity.roll);
+
+        if(loggedInUserType === 'student') await showStudentSection('fees'); 
+        if(loggedInUserType === 'parent') await showParentSection('fees'); 
+        
+        runAIVerification(data.id, loggedInEntity.name, loggedInEntity.roll, data.amount);
+    }
+
+    async function runAIVerification(paymentId, studentName, studentRoll, amount) {
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            console.warn("AI verification skipped: Gemini API key not set.");
+            setTimeout(async () => {
+                 await supabase.from('payments').update({ status: 'verified', verification_notes: 'Manually approved (AI key missing).' }).eq('id', paymentId);
+                 await supabase.from('students').update({ fee_status: 'paid' }).eq('roll', studentRoll);
+            }, 5000);
+            return;
+        }
+
+        const transactionId = `TXN-${Date.now()}`;
+        const prompt = `Act as a meticulous payment auditor for a coaching center. You are verifying an online fee payment.
+        - Student Name: ${studentName}
+        - Roll Number: ${studentRoll}
+        - Payment Amount: ₹${amount}
+        - Simulated Transaction ID: ${transactionId}
+        Analyze this data. If everything looks correct, return a concise confirmation note. Example: "Verified payment of ₹${amount} for student ${studentName} (${studentRoll}), matching records. Transaction ID: ${transactionId}."`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('API request failed');
+
+            const data = await response.json();
+            const verificationNotes = data.candidates[0].content.parts[0].text;
+
+            await supabase.from('payments').update({ status: 'verified', verification_notes: verificationNotes }).eq('id', paymentId);
+            await supabase.from('students').update({ fee_status: 'paid' }).eq('roll', studentRoll);
+            await notifyTeacherOfPayment(paymentId);
+
+        } catch (e) {
+            console.error("AI Verification Error:", e);
+            await supabase.from('payments').update({ status: 'failed', verification_notes: `AI verification failed: ${e.message}` }).eq('id', paymentId);
+        }
+    }
+    
+    async function notifyTeacherOfPayment(paymentId) {
+        // Find fee manager
+        const { data: feeManager } = await supabase.from('teachers').select('id').eq('is_fee_manager', true).limit(1);
+        if (feeManager && feeManager.length > 0) {
+            await supabase.from('notifications').insert({
+                teacher_id: feeManager[0].id,
+                message: `A new payment (ID: ${paymentId}) has been verified by the AI.`
+            });
+        }
+    }
+    
+    async function showPaymentDetails(paymentId) {
+        const { data: payment, error } = await supabase.from('payments').select('*').eq('id', paymentId).single();
+        if (error || !payment) return showNotification("Could not load payment details.");
+        
+        const contentEl = document.getElementById('paymentDetailsContent');
+        contentEl.innerHTML = `
+            <p><span class="font-semibold text-slate-400">Student Roll:</span> ${payment.student_roll}</p>
+            <p><span class="font-semibold text-slate-400">Amount:</span> ₹${payment.amount}</p>
+            <p><span class="font-semibold text-slate-400">Status:</span> ${payment.status}</p>
+            <p><span class="font-semibold text-slate-400">Date:</span> ${new Date(payment.created_at).toLocaleString()}</p>
+            <div class="border-t border-slate-700 mt-2 pt-2">
+                <p class="font-semibold text-slate-400">AI Audit Notes:</p>
+                <p class="font-mono text-sm whitespace-pre-wrap">${payment.verification_notes || 'No notes available.'}</p>
+            </div>
+        `;
+        showModal(paymentDetailsModal);
+    }
+    
+    // --- GENERAL AI FEATURES ---
     document.getElementById('aiAnalyzerBtn').addEventListener('click', async () => {
         const question = document.getElementById('aiAnalyzerQuestion').value.trim();
         const answer = document.getElementById('aiAnalyzerAnswer').value.trim();
@@ -635,6 +725,48 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
     });
 
+    const handleTutorSend = async () => {
+        const query = document.getElementById('aiTutorInput').value.trim();
+        if (!query) return;
+
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            showNotification('The AI Tutor is not configured. Please contact your administrator.');
+            return;
+        }
+
+        document.getElementById('aiTutorInput').value = '';
+        document.getElementById('aiTutorSendBtn').disabled = true;
+        
+        const chatWindow = document.getElementById('aiTutorChatWindow');
+        chatWindow.innerHTML += `<div class="chat-bubble user">${query}</div>`;
+        chatWindow.innerHTML += `<div id="thinkingBubble" class="chat-bubble assistant thinking"><i class="fas fa-spinner fa-spin"></i></div>`;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        const prompt = `You are a friendly and encouraging AI Tutor for a high school student in India. Explain concepts clearly, simply, and concisely. If asked a complex question, break it down. Student's question: "${query}"`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('Failed to get response from AI Tutor.');
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            document.getElementById('thinkingBubble').textContent = text;
+            document.getElementById('thinkingBubble').classList.remove('thinking');
+            document.getElementById('thinkingBubble').id = '';
+        } catch (e) {
+            document.getElementById('thinkingBubble').textContent = `Sorry, I encountered an error: ${e.message}`;
+        } finally {
+            document.getElementById('aiTutorSendBtn').disabled = false;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    };
+    document.getElementById('aiTutorSendBtn').addEventListener('click', handleTutorSend);
+    document.getElementById('aiTutorInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTutorSend(); });
+
+    // --- DASHBOARD RENDERING & STRUCTURE ---
     const renderSidebar = (user, sections) => {
       let welcome = '';
       if (user.type === 'teacher') welcome = `Welcome, ${user.entity.name}`;
@@ -675,8 +807,11 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
           if (who==='parent')  showParentSection(btn.dataset.section);
         });
       });
+      // Activate the first button
+      root.querySelector('.sidebar-btn').classList.add('bg-slate-700');
     };
 
+    // --- TEACHER DASHBOARD ---
     async function renderTeacherDashboard(){
       const user = { type:'teacher', title:'Teacher Dashboard', entity: loggedInEntity };
       let sections = [
@@ -690,7 +825,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         { id:'materials', name:'Materials', icon:'<i class="fas fa-book fa-fw mr-2"></i>' },
         { id:'timetable', name:'Timetable', icon:'<i class="fas fa-calendar-alt fa-fw mr-2"></i>' },
         { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bullhorn fa-fw mr-2"></i>' },
-        { id:'ai_analyzer', name:'AI Paper Analyzer', icon:'<i class="fas fa-magic fa-fw mr-2"></i>' },
+        { id:'ai_analyzer', name:'AI Paper Analyzer', icon:'<i class="fas fa-magic fa-fw mr-2 ai-animated-icon"></i>' },
         { id:'settings', name:'Settings', icon:'<i class="fas fa-cog fa-fw mr-2"></i>' },
       ];
       if (!loggedInEntity.is_fee_manager) {
@@ -710,17 +845,17 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       chartInstances = {};
 
       contentEl.innerHTML = loadingSpinner;
+      controlsEl.innerHTML = ''; // Clear controls by default
 
-      controlsEl.innerHTML = `
-        <div class="flex items-center gap-2">
-          <label for="sectionSelect" class="text-slate-400">Batch:</label>
-          <select id="sectionSelect" class="bg-slate-700 p-2 rounded-lg text-white">
-            ${['12A','12B'].map(s=>`<option value="${s}" ${s===activeSection?'selected':''}>${s}</option>`).join('')}
-          </select>
-        </div>`;
-      const sectionSelect = document.getElementById('sectionSelect');
-      if (sectionSelect){
-        sectionSelect.onchange = (e)=>{ activeSection = e.target.value; showTeacherSection(sectionId); };
+      if (['home', 'details', 'performance', 'dpps', 'attendance', 'fees', 'materials', 'timetable', 'announcements', 'online_tests'].includes(sectionId)) {
+        controlsEl.innerHTML = `
+          <div class="flex items-center gap-2">
+            <label for="sectionSelect" class="text-slate-400">Batch:</label>
+            <select id="sectionSelect" class="bg-slate-700 p-2 rounded-lg text-white">
+              ${['12A','12B'].map(s=>`<option value="${s}" ${s===activeSection?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>`;
+        document.getElementById('sectionSelect').onchange = (e)=>{ activeSection = e.target.value; showTeacherSection(sectionId); };
       }
 
       try {
@@ -731,7 +866,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
             case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderOnlineTestsManager(); break;
             case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderDPPsManager(); break;
             case 'attendance': titleEl.innerText='Mark Attendance'; contentEl.innerHTML= await renderAttendanceTable(); break;
-            case 'fees': if (loggedInEntity.is_fee_manager){ titleEl.innerText='Manage Fees'; contentEl.innerHTML= await renderFeesTable(); } break;
+            case 'fees': if (loggedInEntity.is_fee_manager){ titleEl.innerText='Fee Management'; contentEl.innerHTML= await renderFeesDashboard(); } break;
             case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML= await renderMaterialsManager(); break;
             case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML= await renderTimetableManager(); break;
             case 'announcements': titleEl.innerText='Post Announcements'; contentEl.innerHTML= await renderAnnouncementsManager(); break;
@@ -741,13 +876,132 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
       } catch (error) {
         console.error(`Error rendering section ${sectionId}:`, error);
-        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section. Please try again.</p>`;
+        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section: ${error.message}</p>`;
       }
     }
+    
+    // --- Specific Teacher Sections ---
+    
+    async function renderFeesDashboard() {
+        // Run fee status check for all students in the section
+        const { data: students, error: studentsError } = await supabase.from('students').select('*').eq('section', activeSection).order('roll');
+        if (studentsError) return `<p class="text-red-400">Could not load student data.</p>`;
+        for(const student of students) {
+            await checkAndResetFeeStatus(student);
+        }
+        
+        // Re-fetch data after updates
+        const { data: updatedStudents, error: updatedStudentsError } = await supabase.from('students').select('*').eq('section', activeSection).order('roll');
+        const { data: payments, error: paymentsError } = await supabase.from('payments').select('id, student_roll, amount, status, created_at').order('created_at', { ascending: false }).limit(10);
+        
+        if (updatedStudentsError || paymentsError) {
+            console.error(updatedStudentsError || paymentsError);
+            return `<p class="text-red-400">Could not load fee data.</p>`;
+        }
+        
+        const studentMap = new Map((updatedStudents || []).map(s => [s.roll, s.name]));
 
+        const getStatusInfo = (student) => {
+            const status = student.fee_status || 'due';
+            const dueDay = student.fee_due_day || 15;
+            const today = new Date().getDate();
+
+            if (status === 'paid' || status === 'processing' || status === 'verified') {
+                 return { text: status, badge: 'bg-green-500/20 text-green-400' };
+            }
+            if (status === 'due' && today > dueDay) {
+                return { text: 'overdue', badge: 'bg-red-500/20 text-red-400' };
+            }
+             if (status === 'due') {
+                return { text: 'due', badge: 'bg-yellow-500/20 text-yellow-400' };
+            }
+            return { text: status, badge: 'bg-slate-600' };
+        };
+
+        const liveFeed = `
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <h3 class="text-xl font-bold mb-3">Live AI-Verified Payments</h3>
+                <ul class="space-y-2">
+                    ${(payments || []).map(p => {
+                        const statusInfo = getStatusInfo({fee_status: p.status});
+                        return `
+                        <li class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg cursor-pointer hover:bg-slate-700" onclick="showPaymentDetails(${p.id})">
+                            <div>
+                                <p class="font-semibold">${studentMap.get(p.student_roll) || p.student_roll}</p>
+                                <p class="text-xs text-slate-400">${new Date(p.created_at).toLocaleString()}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusInfo.badge}">${p.status}</span>
+                        </li>
+                    `}).join('') || '<p class="text-slate-400">No recent payments.</p>'}
+                </ul>
+            </div>`;
+
+        const studentTable = `
+            <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+              <div class="mb-4">
+                <button onclick="sendBulkDueFeeReminders()" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Remind All Due/Overdue</button>
+              </div>
+              <table class="responsive-table">
+                <thead><tr><th>Name</th><th>Fee</th><th>Due Day</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  ${(updatedStudents || []).map(s=> {
+                    const statusInfo = getStatusInfo(s);
+                    return `
+                    <tr>
+                      <td data-label="Name">${s.name}</td>
+                      <td data-label="Fee">₹${s.fee_amount || 'N/A'}</td>
+                      <td data-label="Due Day">${s.fee_due_day || 'N/A'}</td>
+                      <td data-label="Status"><span class="px-2 py-1 rounded-full text-xs font-semibold ${statusInfo.badge}">${statusInfo.text}</span></td>
+                      <td data-label="Actions" class="flex flex-wrap gap-2">
+                        <button onclick="updateFeeStatus('${s.roll}','paid')" class="btn btn-secondary text-sm">Mark Paid</button>
+                        <button onclick="updateFeeStatus('${s.roll}','due')" class="btn btn-secondary text-sm">Mark Due</button>
+                        ${(statusInfo.text ==='due' || statusInfo.text === 'overdue') ? `<button onclick="sendWhatsAppDeepLink(formatPhoneNumber('${s.parent_phone||''}'), 'Reminder: Coaching Centre fees of ₹${s.fee_amount} for ${s.name} are ${statusInfo.text}.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : ''}
+                      </td>
+                    </tr>
+                  `}).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        
+        return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">${liveFeed}${studentTable}</div>`;
+    }
+
+    async function updateFeeStatus(roll, status){
+      const { error } = await supabase.from('students').update({ fee_status: status }).eq('roll', roll);
+      if (error) return showNotification(`Failed: ${error.message}`);
+      await showTeacherSection('fees');
+    }
+
+    async function sendBulkDueFeeReminders() {
+      const { data: students = [] } = await supabase.from('students').select('*').eq('section', activeSection);
+      const dueStudents = students.filter(s => {
+          const status = s.fee_status || 'due';
+          const dueDay = s.fee_due_day || 15;
+          const today = new Date().getDate();
+          return (status === 'due' || (status === 'due' && today > dueDay));
+      });
+        
+      const list = document.getElementById('bulkReminderList');
+      list.innerHTML = '';
+      if(dueStudents.length === 0) {
+        list.innerHTML = '<p class="text-slate-400">No students with due or overdue fees.</p>';
+      } else {
+        dueStudents.forEach((s) => {
+            const msg = `Reminder: Coaching Centre fees of ₹${s.fee_amount} for ${s.name} are due.`;
+            const a = document.createElement('a');
+            a.href = `https://wa.me/${formatPhoneNumber(s.parent_phone || '')}?text=${encodeURIComponent(msg)}`;
+            a.target = '_blank';
+            a.className = 'block bg-slate-800 p-2 rounded hover:bg-slate-700';
+            a.textContent = `Message parent of ${s.name}`;
+            list.appendChild(a);
+        });
+      }
+      showModal(bulkReminderModal);
+    }
+    
     async function renderTeacherHome(){
         const [studentsRes, perfRes, testsRes] = await Promise.all([
-            supabase.from('students').select('roll, name, fee_status').eq('section', activeSection),
+            supabase.from('students').select('*').eq('section', activeSection),
             supabase.from('performance').select('student_roll, score, test_id'),
             supabase.from('online_tests').select('id, questions, total_marks').eq('section', activeSection)
         ]);
@@ -819,7 +1073,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         return `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="bg-slate-800 p-4 rounded-lg text-center"><h3 class="text-lg font-bold text-indigo-400">Total Students</h3><p class="text-4xl font-bold mt-2">${totalStudents}</p></div>
-                <div class="bg-slate-800 p-4 rounded-lg text-center"><h3 class="text-lg font-bold text-yellow-400">Fees Due</h3><p class="text-4xl font-bold mt-2">${feesDue}</p></div>
+                <div class="bg-slate-800 p-4 rounded-lg text-center"><h3 class="text-lg font-bold text-yellow-400">Fees Due/Overdue</h3><p class="text-4xl font-bold mt-2">${feesDue}</p></div>
                 <div class="bg-slate-800 p-4 rounded-lg text-center col-span-1 md:col-span-2 lg:col-span-2">
                     <h3 class="text-lg font-bold text-center mb-2 text-cyan-400">Class Performance Distribution</h3>
                     <canvas id="classPerfChart" style="max-height: 120px;"></canvas>
@@ -850,7 +1104,6 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         `;
     }
 
-
     const debounce = (fn,ms)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
     function highlight(text,q){
       if(!q) return text;
@@ -880,10 +1133,10 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
           <td data-label="Name">${highlight(s.name, q)}</td>
           <td data-label="Roll No">${highlight(s.roll, q)}</td>
           <td data-label="Parent Phone">${s.parent_phone || ''}</td>
-          <td data-label="Fee"><span class="px-2 py-1 rounded-full text-xs font-semibold ${s.fee_status==='paid'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}">${s.fee_status||'due'}</span></td>
+          <td data-label="Fee">₹${s.fee_amount || 'N/A'}</td>
           <td data-label="Actions" class="space-x-2">
             <button onclick="openStudentDetailsEdit('${s.roll}')" class="btn btn-secondary text-sm" title="Edit Details"><i class="fas fa-user-edit"></i></button>
-            <button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Hello, this is a message regarding ${s.name}.')" class="btn btn-whatsapp text-sm" title="Message Parent"><i class="fab fa-whatsapp"></i></button>
+            <button onclick="sendWhatsAppDeepLink(formatPhoneNumber('${s.parent_phone||''}'), 'Hello, this is a message regarding ${s.name}.')" class="btn btn-whatsapp text-sm" title="Message Parent"><i class="fab fa-whatsapp"></i></button>
             <button onclick="deleteStudent('${s.roll}')" class="btn btn-danger text-sm" title="Delete Student"><i class="fas fa-trash"></i></button>
           </td>
         </tr>`).join('');
@@ -899,7 +1152,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         </div>
         <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
           <table class="responsive-table">
-            <thead><tr><th>Name</th><th>Roll No</th><th>Parent's Phone</th><th>Fee</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Roll No</th><th>Parent's Phone</th><th>Fee Amount</th><th>Actions</th></tr></thead>
             <tbody>${rows || '<tr><td class="p-2 text-slate-400" colspan="5">No students in this batch.</td></tr>'}</tbody>
           </table>
         </div>`;
@@ -911,16 +1164,26 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       const roll = document.getElementById('addStudentRoll').value.trim();
       const pin = document.getElementById('addStudentPin').value.trim();
       const rawPhone = document.getElementById('addStudentParentPhone').value.trim();
+      const feeAmount = document.getElementById('addStudentFeeAmount').value;
+      const feeDueDay = document.getElementById('addStudentFeeDueDay').value;
       const parentPhone = formatPhoneNumber(rawPhone);
 
-      if (!name || !roll || !pin) return showNotification('Name, Roll, and PIN are required.');
+      if (!name || !roll || !pin || !feeAmount || !feeDueDay) return showNotification('All fields are required.');
       
       const addBtn = event.target;
       addBtn.disabled = true;
       addBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Adding...`;
 
       try {
-        const { error } = await supabase.from('students').insert({ name, section, roll, student_pin: pin, parent_phone: parentPhone || null, fee_status:'due' });
+        const { error } = await supabase.from('students').insert({ 
+            name, section, roll, 
+            student_pin: pin, 
+            parent_phone: parentPhone || null, 
+            fee_status:'due', 
+            fee_amount: Number(feeAmount),
+            fee_due_day: Number(feeDueDay),
+            last_fee_reset: new Date().toISOString()
+        });
         if (error) throw error;
         
         hideModal(addStudentModal);
@@ -947,6 +1210,8 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       document.getElementById('editDetailRoll').value = s.roll;
       document.getElementById('editDetailParentPhone').value = s.parent_phone || '';
       document.getElementById('editDetailStudentPin').value = s.student_pin || '';
+      document.getElementById('editDetailFeeAmount').value = s.fee_amount || '';
+      document.getElementById('editDetailFeeDueDay').value = s.fee_due_day || '';
       editStudentRollGlobal = s.roll;
       showModal(editStudentDetailsModal);
     }
@@ -957,9 +1222,19 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       const rawPhone = document.getElementById('editDetailParentPhone').value.trim();
       const parentPhone = formatPhoneNumber(rawPhone);
       const studentPin = document.getElementById('editDetailStudentPin').value.trim();
-      if (!studentPin) return showNotification("Student PIN cannot be empty.");
+      const feeAmount = document.getElementById('editDetailFeeAmount').value;
+      const feeDueDay = document.getElementById('editDetailFeeDueDay').value;
+
+      if (!studentPin || !feeAmount || !feeDueDay) return showNotification("PIN, Fee Amount, and Due Day are required.");
       
-      const { error } = await supabase.from('students').update({ name, parent_phone: parentPhone || null, student_pin: studentPin }).eq('roll', editStudentRollGlobal);
+      const { error } = await supabase.from('students').update({ 
+          name, 
+          parent_phone: parentPhone || null, 
+          student_pin: studentPin,
+          fee_amount: Number(feeAmount),
+          fee_due_day: Number(feeDueDay)
+      }).eq('roll', editStudentRollGlobal);
+
       if (error) return showNotification(`Update failed: ${error.message}`);
       hideModal(editStudentDetailsModal);
       showNotification('Student updated');
@@ -977,7 +1252,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
 
     async function fetchDPPsForSection(section){
       const { data = [], error } = await supabase.from('dpps')
-        .select('*') // FIX: Select all columns to get storage_path
+        .select('*')
         .eq('section', section).order('created_at', { ascending:false }).order('id', { ascending:false });
       if (error) { console.error("Error fetching DPPs:", error); return []; }
       return data;
@@ -1065,20 +1340,16 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
     }
     
-    // FIX: New function to handle deleting from storage and database
     async function deleteDPP(id, storagePath) {
         showConfirmation('Are you sure you want to delete this DPP?', async () => {
-            // First, delete the database record
             const { error: dbError } = await supabase.from('dpps').delete().eq('id', id);
             if (dbError) {
                 return showNotification(`Database delete failed: ${dbError.message}`);
             }
 
-            // If there's a file in storage, delete it
             if (storagePath) {
                 const { error: storageError } = await supabase.storage.from('dpps').remove([storagePath]);
                 if (storageError) {
-                    // Notify user but don't stop the process, as the DB entry is already gone
                     showNotification(`Could not delete file from storage: ${storageError.message}`);
                 }
             }
@@ -1086,82 +1357,6 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
             showNotification('DPP deleted successfully.');
             await showTeacherSection('dpps');
         });
-    }
-
-
-    async function renderStudentDPPsView(){
-      const dpps = await fetchDPPsForSection(activeSection);
-      return `
-        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
-          <table class="responsive-table">
-            <thead><tr><th>Title</th><th>Date</th><th>Download</th></tr></thead>
-            <tbody>
-              ${dpps.length ? dpps.map(d=>`
-                <tr>
-                  <td data-label="Title">${d.title}</td>
-                  <td data-label="Date">${(d.date||'').slice(0,10)}</td>
-                  <td data-label="Download"><a href="${d.pdf_link}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-download"></i></a></td>
-                </tr>`).join('') : '<tr><td class="p-2 text-slate-400" colspan="3">No DPPs yet.</td></tr>'}
-            </tbody>
-          </table>
-        </div>`;
-    }
-
-    async function openMarksEntryModal(testId, testName, totalMarks) {
-        document.getElementById('marksModalTitle').innerText = `Enter Marks for: ${testName}`;
-        document.getElementById('marksModalSubTitle').innerText = `Total Marks: ${totalMarks || 'N/A'}`;
-        const form = document.getElementById('marksEntryForm');
-        form.innerHTML = '<p class="text-slate-400">Loading students...</p>';
-
-        const { data: students, error: stuError } = await supabase.from('students').select('roll, name').eq('section', activeSection).order('roll');
-        if (stuError) {
-            form.innerHTML = '<p class="text-red-400">Could not load students.</p>';
-            return;
-        }
-
-        const { data: performance, error: perfError } = await supabase.from('performance').select('student_roll, score').eq('test_id', testId);
-        const scoresMap = new Map((performance || []).map(p => [p.student_roll, p.score]));
-
-        form.innerHTML = students.map(s => `
-            <div class="grid grid-cols-3 items-center gap-2">
-                <label class="col-span-2 text-slate-300 truncate" for="score-${s.roll}">${s.name} (${s.roll})</label>
-                <input type="number" id="score-${s.roll}" class="col-span-1 bg-slate-700 p-2 rounded-lg w-full" 
-                       placeholder="Score" value="${scoresMap.get(s.roll) ?? ''}" data-roll="${s.roll}">
-            </div>
-        `).join('');
-        
-        const saveBtn = document.getElementById('marksSaveBtn');
-        const newSaveBtn = saveBtn.cloneNode(true);
-        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-        newSaveBtn.onclick = () => saveMarks(testId);
-
-        showModal(marksEntryModal);
-    }
-
-    async function saveMarks(testId) {
-        const inputs = document.querySelectorAll('#marksEntryForm input[data-roll]');
-        const upserts = [];
-        inputs.forEach(input => {
-            const roll = input.dataset.roll;
-            const score = input.value === '' ? null : Number(input.value);
-            upserts.push({
-                student_roll: roll,
-                test_id: testId,
-                teacher_id: loggedInEntity.id,
-                subject: loggedInEntity.subject,
-                score: score
-            });
-        });
-
-        if (upserts.length > 0) {
-            const { error } = await supabase.from('performance').upsert(upserts, { onConflict: 'student_roll, test_id' });
-            if (error) {
-                showNotification(`Error saving marks: ${error.message}`);
-            } else {
-                showNotification('Marks saved successfully!');
-                hideModal(marksEntryModal);
-            }
-        }
     }
 
     let teacherSelectedTestId = 'all';
@@ -1340,7 +1535,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       const rows = students.map(s => {
         const st = dayMap.get(s.roll) || 'N/A';
         const statusClass = st==='P' ? 'bg-green-500/20 text-green-400' : st==='A' ? 'bg-red-500/20 text-red-400' : 'bg-slate-600 text-slate-300';
-        const waBtn = (st === 'A') ? `<button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : '';
+        const waBtn = (st === 'A') ? `<button onclick="sendWhatsAppDeepLink(formatPhoneNumber('${s.parent_phone||''}'), 'Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : '';
         const presentBtnClass = st==='P' ? 'btn-primary' : 'btn-secondary';
         const absentBtnClass = st==='A' ? 'btn-danger' : 'btn-secondary';
         return `
@@ -1407,56 +1602,10 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       list.innerHTML = '';
       students.filter(s=> absentSet.has(s.roll)).forEach(s => {
         const a = document.createElement('a');
-        a.href = `https://wa.me/${s.parent_phone||''}?text=${encodeURIComponent(`Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.`)}`;
+        a.href = `https://wa.me/${formatPhoneNumber(s.parent_phone||'')}?text=${encodeURIComponent(`Dear Parent, your child ${s.name} was absent on ${selectedAttendanceDate}.`)}`;
         a.target = "_blank";
         a.className = "block bg-slate-800 p-2 rounded hover:bg-slate-700";
         a.textContent = `Message parent of ${s.name} (${s.roll})`;
-        list.appendChild(a);
-      });
-      showModal(bulkReminderModal);
-    }
-
-    async function renderFeesTable(){
-      const { data: students=[] } = await supabase.from('students').select('roll,name,fee_status,parent_phone').eq('section', activeSection).order('roll');
-      return `
-        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
-          <div class="mb-4">
-            <button onclick="sendBulkDueFeeReminders()" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Send Reminders to All Due</button>
-          </div>
-          <table class="responsive-table">
-            <thead><tr><th>Name</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${students.map(s=>`
-                <tr>
-                  <td data-label="Name">${s.name}</td>
-                  <td data-label="Status"><span class="px-2 py-1 rounded-full text-xs font-semibold ${s.fee_status==='paid'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}">${s.fee_status}</span></td>
-                  <td data-label="Actions" class="flex flex-wrap gap-2">
-                    <button onclick="updateFeeStatus('${s.roll}','paid')" class="btn btn-secondary text-sm">Paid</button>
-                    <button onclick="updateFeeStatus('${s.roll}','due')" class="btn btn-secondary text-sm">Due</button>
-                    ${s.fee_status==='due' ? `<button onclick="sendWhatsAppDeepLink('${s.parent_phone||''}', 'Reminder: Coaching Centre fees for ${s.name} are due.')" class="btn btn-whatsapp text-sm"><i class="fab fa-whatsapp"></i></button>` : ''}
-                  </td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    }
-    async function updateFeeStatus(roll, status){
-      const { error } = await supabase.from('students').update({ fee_status: status }).eq('roll', roll);
-      if (error) return showNotification(`Failed: ${error.message}`);
-      await showTeacherSection('fees');
-    }
-    async function sendBulkDueFeeReminders() {
-      const { data: students = [] } = await supabase
-        .from('students').select('name,parent_phone').eq('section', activeSection).eq('fee_status', 'due');
-      const list = document.getElementById('bulkReminderList');
-      list.innerHTML = '';
-      students.forEach((s) => {
-        const msg = `Reminder: Coaching Centre fees for ${s.name} are due.`;
-        const a = document.createElement('a');
-        a.href = `https://wa.me/${s.parent_phone || ''}?text=${encodeURIComponent(msg)}`;
-        a.target = '_blank';
-        a.className = 'block bg-slate-800 p-2 rounded hover:bg-slate-700';
-        a.textContent = `Message parent of ${s.name}`;
         list.appendChild(a);
       });
       showModal(bulkReminderModal);
@@ -1617,12 +1766,46 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
 
     function renderTeacherSettings(){
       return `
-        <div class="bg-slate-800 p-4 rounded-lg">
-          <h3 class="text-xl font-bold mb-4">Account Settings</h3>
-          <p class="mb-2">Your current PIN is confidential.</p>
-          <button onclick="showModal(changePinModal)" class="btn btn-primary">Change My PIN</button>
+        <div class="bg-slate-800 p-4 rounded-lg space-y-6">
+            <div>
+                <h3 class="text-xl font-bold mb-4">Account Settings</h3>
+                <p class="mb-2">Your current PIN is confidential.</p>
+                <button onclick="showModal(changePinModal)" class="btn btn-primary">Change My PIN</button>
+            </div>
+            <div class="border-t border-slate-700 pt-6">
+                 <h3 class="text-xl font-bold mb-4 text-red-400">Data Management</h3>
+                 <p class="text-slate-400 mb-4">Permanently delete old records from the database. This action cannot be undone. Student details and learning materials will NOT be deleted.</p>
+                 <button onclick="purgeOldData(30)" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Purge Data Older Than 30 Days</button>
+            </div>
         </div>`;
     }
+
+    async function purgeOldData(days) {
+        const tablesToPurge = ['performance', 'attendance', 'test_submissions', 'dpps', 'online_tests', 'announcements', 'nudges', 'payments'];
+        const message = `Are you sure you want to permanently delete all records (except student details and materials) older than ${days} days?\n\nThis will affect: ${tablesToPurge.join(', ')}.\n\nTHIS ACTION CANNOT BE UNDONE.`;
+
+        showConfirmation(message, async () => {
+            showNotification("Purging old data... This may take a moment.");
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - days);
+            const cutoffISO = cutoffDate.toISOString();
+
+            let errors = [];
+            for (const table of tablesToPurge) {
+                const { error } = await supabase.from(table).delete().lt('created_at', cutoffISO);
+                if (error) {
+                    errors.push(`Failed to purge ${table}: ${error.message}`);
+                    console.error(`Failed to purge ${table}:`, error);
+                }
+            }
+            if (errors.length > 0) {
+                showNotification(`Purge completed with errors:\n${errors.join('\n')}`);
+            } else {
+                showNotification('Successfully purged all old data.');
+            }
+        });
+    }
+
     async function updateTeacherPin(){
       const np = document.getElementById('newPinInput').value.trim();
       const cp = document.getElementById('confirmNewPinInput').value.trim();
@@ -1633,25 +1816,28 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       hideModal(changePinModal);
       showNotification('PIN updated.');
     }
+    // --- END: Specific Teacher Sections ---
 
+    // --- STUDENT DASHBOARD ---
     async function renderStudentDashboard(){
       const user = { type:'student', title:'Student Dashboard', entity: loggedInEntity };
       const sections = [
-        { id:'performance', name:'My Performance', icon:'<i class="fas fa-chart-pie fa-fw mr-2"></i>' },
+        { id:'progress', name:'My Progress', icon:'<i class="fas fa-chart-pie fa-fw mr-2"></i>' },
         { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
         { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
         { id:'attendance', name:'My Attendance', icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
+        { id:'fees', name:'Pay Fees', icon:'<i class="fas fa-credit-card fa-fw mr-2"></i>' },
         { id:'materials', name:'Class Materials', icon:'<i class="fas fa-book-open fa-fw mr-2"></i>' },
         { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
         { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
         { id:'teachers', name:'My Teachers', icon:'<i class="fas fa-chalkboard-teacher fa-fw mr-2"></i>' },
-        { id:'ai_tutor', name:'AI Tutor', icon:'<i class="fas fa-brain fa-fw mr-2"></i>' },
+        { id:'ai_tutor', name:'AI Tutor', icon:'<i class="fas fa-brain fa-fw mr-2 ai-animated-icon"></i>' },
       ];
       studentDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
       attachSidebarListeners('student');
-      await showStudentSection('performance');
+      await showStudentSection('progress');
     }
-
+    
     async function showStudentSection(sectionId){
       const titleEl = document.getElementById('studentSectionTitle');
       const contentEl = document.getElementById('studentContent');
@@ -1664,10 +1850,11 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       controlsEl.innerHTML = `<p class="text-sm text-slate-400">Roll: <span class="font-mono bg-slate-700 px-2 py-1 rounded">${loggedInEntity.roll}</span></p>`;
       try {
         switch(sectionId){
-            case 'performance': titleEl.innerText='My Performance'; contentEl.innerHTML = await renderStudentPerformance(); break;
+            case 'progress': titleEl.innerText='My Progress'; contentEl.innerHTML = await renderStudentProgress(); break;
             case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(); break;
             case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderStudentDPPsView(); break;
             case 'attendance': titleEl.innerText='My Attendance'; contentEl.innerHTML = await renderStudentAttendance(); break;
+            case 'fees': titleEl.innerText='Pay Fees'; contentEl.innerHTML = await renderStudentFees(); break;
             case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
             case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
             case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
@@ -1677,129 +1864,187 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
       } catch (error) {
         console.error(`Error rendering student section ${sectionId}:`, error);
-        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section. Please try again.</p>`;
+        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section.</p>`;
       }
     }
-
-    async function renderStudentPerformance(){
-        const roll = loggedInEntity.roll;
-        const [perfRes, teachersRes, testsRes, attendanceRes] = await Promise.all([
-            supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll).order('created_at', { ascending: false }),
-            supabase.from('teachers').select('id,name').eq('section', activeSection),
-            supabase.from('online_tests').select('id, title, created_at, total_marks').eq('section', activeSection),
-            supabase.from('attendance').select('status').eq('student_roll', roll)
+    
+    // --- Specific Student Sections (Gamified) ---
+    
+    async function renderStudentProgress() {
+        const [perfRes, testsRes, attendanceRes, allStudentsRes] = await Promise.all([
+            supabase.from('performance').select('student_roll, score, test_id'),
+            supabase.from('online_tests').select('id, total_marks').eq('section', activeSection),
+            supabase.from('attendance').select('status').eq('student_roll', loggedInEntity.roll),
+            supabase.from('students').select('roll, name').eq('section', activeSection)
         ]);
 
-        const performanceData = perfRes.data || [];
-        const tests = testsRes.data || [];
-        const tMap = new Map((teachersRes.data || []).map(t => [t.id, t.name]));
-        const testsMap = new Map(tests.map(t => [t.id, t]));
+        const myPerf = (perfRes.data || []).filter(p => p.student_roll === loggedInEntity.roll);
+        const allPerf = perfRes.data || [];
+        const testsMap = new Map((testsRes.data || []).map(t => [t.id, t.total_marks]));
 
-        const chartContainer = `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-bold text-center mb-2">My Attendance</h3>
-                    <canvas id="studentAttendanceChart"></canvas>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-bold text-center mb-2">Recent Test Scores (%)</h3>
-                    <canvas id="studentPerformanceChart"></canvas>
-                </div>
-            </div>`;
+        const calculateAvg = (roll) => {
+            const studentScores = allPerf.filter(p => p.student_roll === roll && p.score !== null);
+            let totalPercentage = 0, count = 0;
+            studentScores.forEach(p => {
+                const totalMarks = testsMap.get(p.test_id);
+                if (totalMarks > 0) {
+                    totalPercentage += (p.score / totalMarks) * 100;
+                    count++;
+                }
+            });
+            return count > 0 ? (totalPercentage / count) : 0;
+        };
         
+        const myAvg = calculateAvg(loggedInEntity.roll);
+        const attendance = attendanceRes.data || [];
+        const presentCount = attendance.filter(a => a.status === 'P').length;
+        const attendancePct = attendance.length > 0 ? (presentCount / attendance.length) * 100 : 100;
+
+        const leaderboard = (allStudentsRes.data || [])
+            .map(s => ({ name: s.name, avg: calculateAvg(s.roll) }))
+            .sort((a, b) => b.avg - a.avg)
+            .slice(0, 5);
+
+        const badges = [
+            { id: 'scorer', name: 'High Scorer', icon: 'fas fa-star', unlocked: myAvg >= 90, desc: 'Avg. >90%' },
+            { id: 'attendance', name: 'Perfect Attendance', icon: 'fas fa-user-check', unlocked: attendancePct === 100, desc: '100% Present' },
+            { id: 'consistent', name: 'Consistent', icon: 'fas fa-medal', unlocked: myAvg >= 75, desc: 'Avg. >75%' },
+            { id: 'challenger', name: 'Challenger', icon: 'fas fa-fist-raised', unlocked: myPerf.length >= 5, desc: '5+ Tests Taken' }
+        ];
+        
+        const myRecentTests = (myPerf || []).map(p => {
+            const test = testsMap.get(p.test_id);
+            const score = p.score;
+            const total = test || 0;
+            return total > 0 ? (score/total) * 100 : 0;
+        }).slice(0, 10).reverse();
+
+
         setTimeout(() => {
-            // Attendance Chart
-            const presentCount = (attendanceRes.data || []).filter(a => a.status === 'P').length;
-            const absentCount = (attendanceRes.data || []).filter(a => a.status === 'A').length;
-            const attendanceCtx = document.getElementById('studentAttendanceChart')?.getContext('2d');
-            if (attendanceCtx) {
-                if(chartInstances.studentAttendanceChart) chartInstances.studentAttendanceChart.destroy();
-                chartInstances.studentAttendanceChart = new Chart(attendanceCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Present', 'Absent'],
-                        datasets: [{ data: [presentCount, absentCount], backgroundColor: ['#4ade80', '#f87171'], borderColor: '#1e293b', borderWidth: 4 }]
-                    },
-                    options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } } }
-                });
-            }
-
-            // Performance Chart
-            const recentPerf = performanceData.slice(0, 5).reverse(); // last 5 tests, reversed for chronological chart
-            const perfCtx = document.getElementById('studentPerformanceChart')?.getContext('2d');
-            if (perfCtx) {
-                const chartData = {
-                    labels: [],
-                    datasets: [{
-                        label: 'Score %',
-                        data: [],
-                        backgroundColor: 'rgba(79, 70, 229, 0.5)',
-                        borderColor: 'rgba(79, 70, 229, 1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true
-                    }]
-                };
-
-                recentPerf.forEach(p => {
-                    const test = testsMap.get(p.test_id);
-                    if (test && test.total_marks > 0 && p.score !== null) {
-                        chartData.labels.push(test.title);
-                        chartData.datasets[0].data.push((p.score / test.total_marks) * 100);
-                    }
-                });
-
+            const ctx = document.getElementById('studentPerformanceChart')?.getContext('2d');
+            if (ctx) {
                 if(chartInstances.studentPerformanceChart) chartInstances.studentPerformanceChart.destroy();
-                chartInstances.studentPerformanceChart = new Chart(perfCtx, {
+                chartInstances.studentPerformanceChart = new Chart(ctx, {
                     type: 'line',
-                    data: chartData,
+                    data: {
+                        labels: myRecentTests.map((_, i) => `Test ${i+1}`),
+                        datasets: [{
+                            label: 'Test Score (%)',
+                            data: myRecentTests,
+                            borderColor: '#818cf8',
+                            backgroundColor: 'rgba(129, 140, 248, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
                     options: {
                         responsive: true,
                         scales: {
-                            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' } },
+                            y: { min: 0, max: 100, ticks: { color: '#94a3b8' } },
                             x: { ticks: { color: '#94a3b8' } }
-                        },
-                        plugins: { legend: { display: false } }
+                        }
                     }
                 });
             }
         }, 0);
 
+
         return `
-            ${chartContainer}
-            <div class="bg-slate-800 p-4 rounded-lg">
-                <h3 class="text-xl font-bold mb-3">Detailed Performance History</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="border-b border-slate-700 text-slate-400">
-                                <th class="p-2">Test Name</th>
-                                <th class="p-2">Subject</th>
-                                <th class="p-2">Score</th>
-                                <th class="p-2">Percentage</th>
-                                <th class="p-2">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${performanceData.map(p => {
-                                const test = testsMap.get(p.test_id);
-                                const totalMarks = test?.total_marks;
-                                const percentage = (totalMarks > 0 && p.score !== null) ? `${((p.score / totalMarks) * 100).toFixed(1)}%` : 'N/A';
-                                return `
-                                <tr class="border-b border-slate-700">
-                                    <td class="p-2">${test?.title || 'Offline Test'}</td>
-                                    <td class="p-2">${p.subject}</td>
-                                    <td class="p-2 font-mono">${p.score ?? 'N/A'} / ${totalMarks || 'N/A'}</td>
-                                    <td class="p-2 font-bold ${percentage.startsWith('N') ? '' : (parseFloat(percentage) >= 75 ? 'text-green-400' : (parseFloat(percentage) >= 50 ? 'text-yellow-400' : 'text-red-400'))}">${percentage}</td>
-                                    <td class="p-2">${new Date(p.created_at).toLocaleDateString()}</td>
-                                </tr>
-                                `
-                            }).join('') || '<tr><td colspan="5" class="p-4 text-center text-slate-400">No performance records yet.</td></tr>'}
-                        </tbody>
-                    </table>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-xl font-bold mb-3">My Achievements</h3>
+                    <div class="flex flex-wrap justify-center gap-4 text-center">
+                        ${badges.map(b => `
+                            <div class="flex flex-col items-center">
+                                <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl badge ${b.unlocked ? 'unlocked bg-yellow-400 text-slate-900' : 'bg-slate-700'}">
+                                    <i class="${b.icon}"></i>
+                                </div>
+                                <p class="font-semibold mt-2">${b.name}</p>
+                                <p class="text-xs text-slate-400">${b.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                     <div class="mt-6">
+                         <h3 class="text-xl font-bold mb-3 text-center">My Recent Performance Trend (%)</h3>
+                         <canvas id="studentPerformanceChart"></canvas>
+                     </div>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <h3 class="text-xl font-bold mb-3 text-center text-indigo-400">Class Leaderboard</h3>
+                     <ul class="space-y-2">
+                        ${leaderboard.map((s, i) => `
+                            <li class="flex justify-between items-center bg-slate-700/50 p-2 rounded">
+                                <span>${i+1}. ${s.name}</span>
+                                <span class="font-bold">${s.avg.toFixed(1)}%</span>
+                            </li>
+                        `).join('')}
+                    </ul>
                 </div>
             </div>
         `;
+    }
+    
+    async function renderStudentFees() {
+        const student = loggedInEntity;
+        const status = student.fee_status;
+
+        if (status === 'paid') {
+            return `<div class="bg-slate-800 p-6 rounded-lg text-center">
+                        <i class="fas fa-check-circle text-5xl text-green-400 mb-4"></i>
+                        <h3 class="text-2xl font-bold">Fees Paid for this month</h3>
+                        <p class="text-slate-400">Your fee payment for this cycle is complete. Thank you!</p>
+                    </div>`;
+        }
+
+        if (status === 'processing') {
+            return `<div class="bg-slate-800 p-6 rounded-lg text-center">
+                        <i class="fas fa-spinner fa-spin text-5xl text-blue-400 mb-4"></i>
+                        <h3 class="text-2xl font-bold">Payment Processing</h3>
+                        <p class="text-slate-400">We have received your payment confirmation. Our AI is verifying the transaction. Please check back shortly.</p>
+                    </div>`;
+        }
+
+        // Default: status is 'due' or 'overdue'
+        const upiId = '8302153208@ybl';
+        const payeeName = 'Coaching Centre';
+        const amount = student.fee_amount || 0;
+        const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+        
+        const dueDay = student.fee_due_day || 15;
+        const today = new Date().getDate();
+        const isOverdue = today > dueDay;
+
+        return `<div class="bg-slate-800 p-6 rounded-lg text-center">
+                    <h3 class="text-2xl font-bold mb-2">Pay Your Fees</h3>
+                    ${isOverdue ? `<p class="text-red-400 font-bold mb-4">Your fee is overdue. Please pay immediately.</p>` : `<p class="text-slate-400 mb-4">Your fee is due by the ${dueDay}th of this month.</p>`}
+                    <p class="text-slate-400 mb-6">Scan the QR code or use the link below to pay <span class="font-bold text-white">₹${amount}</span>.</p>
+                    <div class="flex justify-center mb-4 bg-white p-4 rounded-lg inline-block">
+                       <img src="${qrCodeUrl}" alt="UPI QR Code" class="w-48 h-48">
+                    </div>
+                    <a href="${upiLink}" class="text-indigo-400 hover:underline mb-6 block">Or Click here for Payment Link</a>
+                    <button onclick="simulatePayment()" class="btn btn-primary w-full max-w-sm mx-auto">
+                        <i class="fas fa-check"></i> I Have Paid
+                    </button>
+                </div>`;
+    }
+
+    async function renderStudentDPPsView(){
+      const dpps = await fetchDPPsForSection(activeSection);
+      return `
+        <div class="overflow-x-auto bg-slate-800 p-4 rounded-lg">
+          <table class="responsive-table">
+            <thead><tr><th>Title</th><th>Date</th><th>Download</th></tr></thead>
+            <tbody>
+              ${dpps.length ? dpps.map(d=>`
+                <tr>
+                  <td data-label="Title">${d.title}</td>
+                  <td data-label="Date">${(d.date||'').slice(0,10)}</td>
+                  <td data-label="Download"><a href="${d.pdf_link}" target="_blank" class="btn btn-secondary text-sm"><i class="fas fa-download"></i></a></td>
+                </tr>`).join('') : '<tr><td class="p-2 text-slate-400" colspan="3">No DPPs yet.</td></tr>'}
+            </tbody>
+          </table>
+        </div>`;
     }
 
     async function renderStudentAttendance(){
@@ -1842,35 +2087,38 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     async function renderStudentTeachers(){
       const { data: teachers=[] } = await supabase.from('teachers').select('name,subject,whatsapp,section').eq('section', activeSection);
       if (!teachers.length) return '<p class="text-slate-400">No teachers found for this batch.</p>';
+      const teacherWhatsAppNumber = '918302153208';
       return `
         <div class="grid md:grid-cols-2 gap-4">
           ${teachers.map(t=>`
             <div class="bg-slate-800 p-4 rounded-lg">
               <h3 class="text-xl font-bold">${t.name}</h3>
               <p class="text-slate-400">Subject: ${t.subject}</p>
-              ${t.whatsapp ? `<button class="btn btn-whatsapp mt-2" onclick="sendWhatsAppDeepLink('${t.whatsapp}','Hello ${t.name}, I have a query.')"><i class="fab fa-whatsapp"></i> Contact Teacher</button>` : ''}
+              <button class="btn btn-whatsapp mt-2" onclick="sendWhatsAppDeepLink('${teacherWhatsAppNumber}','Hello ${t.name}, I am ${loggedInEntity.name} and I have a query.')"><i class="fab fa-whatsapp"></i> Message</button>
             </div>
           `).join('')}
         </div>`;
     }
 
+    // --- PARENT DASHBOARD ---
     async function renderParentDashboard(){
       const user = { type:'parent', title:'Parent Dashboard', entity: loggedInEntity };
       const sections = [
+        { id:'digest', name:"AI Performance Digest", icon:'<i class="fas fa-brain fa-fw mr-2 ai-animated-icon"></i>' },
         { id:'performance', name:"Child's Performance", icon:'<i class="fas fa-chart-pie fa-fw mr-2"></i>' },
+        { id:'attendance', name:"Child's Attendance", icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
+        { id:'fees', name:"Pay Fees", icon:'<i class="fas fa-credit-card fa-fw mr-2"></i>' },
         { id:'online_tests', name:'Online Tests', icon:'<i class="fas fa-laptop-code fa-fw mr-2"></i>' },
         { id:'dpps', name:'DPPs', icon:'<i class="fas fa-file-lines fa-fw mr-2"></i>' },
-        { id:'attendance', name:"Child's Attendance", icon:'<i class="fas fa-calendar-check fa-fw mr-2"></i>' },
-        { id:'teachers', name:'Contact Teachers', icon:'<i class="fas fa-chalkboard-teacher fa-fw mr-2"></i>' }, // New section for parents
         { id:'materials', name:'Class Materials', icon:'<i class="fas fa-book-open fa-fw mr-2"></i>' },
         { id:'timetable', name:'Class Timetable', icon:'<i class="fas fa-clock fa-fw mr-2"></i>' },
         { id:'announcements', name:'Announcements', icon:'<i class="fas fa-bell fa-fw mr-2"></i>' },
       ];
       parentDashboard.innerHTML = renderSidebar(user, sections) + renderContentArea(user);
       attachSidebarListeners('parent');
-      await showParentSection('performance');
+      await showParentSection('digest');
     }
-
+    
     async function showParentSection(sectionId){
       const titleEl = document.getElementById('parentSectionTitle');
       const contentEl = document.getElementById('parentContent');
@@ -1878,17 +2126,18 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       contentEl.innerHTML = loadingSpinner;
       controlsEl.innerHTML = `
         <div class="flex items-center gap-4">
-            <p class="text-sm text-slate-400">Child: <span class="font-mono bg-slate-700 px-2 py-1 rounded">${loggedInEntity.name} — ${loggedInEntity.roll}</span></p>
+            <p class="text-sm text-slate-400">Child: <span class="font-mono bg-slate-700 px-2 py-1 rounded">${loggedInEntity.name}</span></p>
             <button onclick="sendNudgeToStudent('${loggedInEntity.roll}')" class="btn btn-primary btn-sm"><i class="fas fa-hand-point-right mr-2"></i>Nudge to Study</button>
         </div>
       `;
       try {
         switch(sectionId){
-            case 'performance': titleEl.innerText="Child's Performance"; contentEl.innerHTML = await renderStudentPerformance(); break;
-            case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(true); break; // Pass true for parent view
+            case 'digest': titleEl.innerText="AI Performance Digest"; contentEl.innerHTML = await renderParentDigest(); break;
+            case 'performance': titleEl.innerText="Child's Performance"; contentEl.innerHTML = await renderStudentProgress(); break;
+            case 'online_tests': titleEl.innerText='Online Tests'; contentEl.innerHTML = await renderStudentOnlineTests(true); break;
             case 'dpps': titleEl.innerText='DPPs'; contentEl.innerHTML = await renderStudentDPPsView(); break;
             case 'attendance': titleEl.innerText="Child's Attendance"; contentEl.innerHTML = await renderStudentAttendance(); break;
-            case 'teachers': titleEl.innerText='Contact Teachers'; contentEl.innerHTML = await renderStudentTeachers(); break; // Re-use the same function
+            case 'fees': titleEl.innerText="Pay Fees"; contentEl.innerHTML = await renderStudentFees(); break;
             case 'materials': titleEl.innerText='Class Materials'; contentEl.innerHTML = await renderStudentMaterials(); break;
             case 'timetable': titleEl.innerText='Class Timetable'; contentEl.innerHTML = await renderStudentTimetable(); break;
             case 'announcements': titleEl.innerText='Announcements'; contentEl.innerHTML = await renderStudentAnnouncements(); break;
@@ -1896,10 +2145,124 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
       } catch(e) {
         console.error(`Error rendering parent section ${sectionId}:`, e);
-        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section. Please try again.</p>`;
+        contentEl.innerHTML = `<p class="text-red-400">An error occurred while loading this section.</p>`;
       }
     }
     
+    async function renderParentDigest() {
+        return `
+            <div class="bg-slate-800 p-6 rounded-lg">
+                <h3 class="text-2xl font-bold mb-4">AI Performance Analysis</h3>
+                <p class="text-slate-400 mb-6">Ask our AI assistant for a detailed summary of your child's progress. Select a question below to get started.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <button class="btn btn-secondary w-full text-left" onclick="getAIParentAnalysis('performance')">How is my child performing overall?</button>
+                    <button class="btn btn-secondary w-full text-left" onclick="getAIParentAnalysis('improvement')">Where does my child need to improve?</button>
+                    <button class="btn btn-secondary w-full text-left" onclick="getAIParentAnalysis('comparison_ahead')">Who is performing better than my child?</button>
+                    <button class="btn btn-secondary w-full text-left" onclick="getAIParentAnalysis('comparison_behind')">Who is my child ahead of?</button>
+                </div>
+
+                <div id="aiParentAnalysisResult" class="bg-slate-900 p-4 rounded-lg min-h-[150px] whitespace-pre-wrap font-sans text-slate-300">
+                   Select a question above to see the AI's analysis.
+                </div>
+            </div>`;
+    }
+
+    async function getAIParentAnalysis(promptType) {
+        const resultDiv = document.getElementById('aiParentAnalysisResult');
+        if (!resultDiv) return;
+        resultDiv.innerHTML = loadingSpinner;
+        
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+            resultDiv.textContent = 'This feature is currently unavailable. The school has not configured the AI assistant. Please contact the administrator.';
+            return;
+        }
+
+        try {
+            // 1. Fetch all necessary data
+            const [perfRes, testsRes, attendanceRes, allStudentsRes] = await Promise.all([
+                supabase.from('performance').select('student_roll, score, test_id'),
+                supabase.from('online_tests').select('id, total_marks').eq('section', loggedInEntity.section),
+                supabase.from('attendance').select('status').eq('student_roll', loggedInEntity.roll),
+                supabase.from('students').select('roll, name').eq('section', loggedInEntity.section)
+            ]);
+
+            // 2. Process the data
+            const allPerf = perfRes.data || [];
+            const testsMap = new Map((testsRes.data || []).map(t => [t.id, t.total_marks]));
+            const allStudents = allStudentsRes.data || [];
+
+            const calculateAvg = (roll) => {
+                const studentScores = allPerf.filter(p => p.student_roll === roll && p.score !== null);
+                let totalPercentage = 0, count = 0;
+                studentScores.forEach(p => {
+                    const totalMarks = testsMap.get(p.test_id);
+                    if (totalMarks > 0) {
+                        totalPercentage += (p.score / totalMarks) * 100;
+                        count++;
+                    }
+                });
+                return count > 0 ? (totalPercentage / count) : 0;
+            };
+
+            const leaderboard = allStudents
+                .map(s => ({ name: s.name, roll: s.roll, avg: calculateAvg(s.roll) }))
+                .sort((a, b) => b.avg - a.avg);
+            
+            const myRankIndex = leaderboard.findIndex(s => s.roll === loggedInEntity.roll);
+            const myData = leaderboard[myRankIndex];
+            if (!myData) throw new Error("Could not find student data in leaderboard.");
+
+            const studentsAhead = leaderboard.slice(0, myRankIndex);
+            const studentsBehind = leaderboard.slice(myRankIndex + 1);
+            
+            const attendance = attendanceRes.data || [];
+            const presentCount = attendance.filter(a => a.status === 'P').length;
+            const attendancePct = attendance.length > 0 ? ((presentCount / attendance.length) * 100).toFixed(1) : 100;
+
+            // 3. Construct the prompt
+            let question = "";
+            switch (promptType) {
+                case 'performance': question = `Give me an overall performance summary for ${myData.name}.`; break;
+                case 'improvement': question = `Based on the data, where does ${myData.name} need to improve?`; break;
+                case 'comparison_ahead': question = `List up to 5 students performing better than ${myData.name} and explain the performance gap.`; break;
+                case 'comparison_behind': question = `List up to 5 students that ${myData.name} is currently ahead of.`; break;
+            }
+
+            const prompt = `
+            You are a helpful and encouraging academic advisor for a coaching center. Use the provided data to answer a parent's question about their child, ${myData.name}. Address the parent directly and provide a clear, concise, and constructive summary in simple language.
+
+            **Student Data:**
+            - Name: ${myData.name}
+            - Overall Average Score: ${myData.avg.toFixed(2)}%
+            - Class Rank: ${myRankIndex + 1} out of ${leaderboard.length}
+            - Attendance: ${attendancePct}%
+            - Students performing better: ${studentsAhead.length > 0 ? studentsAhead.map(s => `${s.name} (${s.avg.toFixed(1)}%)`).slice(0, 5).join(', ') : 'None'}
+            - Students performing worse: ${studentsBehind.length > 0 ? studentsBehind.map(s => `${s.name} (${s.avg.toFixed(1)}%)`).slice(0, 5).join(', ') : 'None'}
+
+            **Parent's Question:** "${question}"
+
+            Please provide a response based ONLY on this data.
+            `;
+            
+            // 4. Call the API
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error('Failed to get response from AI assistant.');
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            resultDiv.textContent = text;
+
+        } catch(e) {
+            console.error("AI Analysis Error:", e);
+            resultDiv.textContent = `An error occurred while generating the analysis: ${e.message}`;
+        }
+    }
+
+
     async function sendNudgeToStudent(studentRoll) {
         const { error } = await supabase.from('nudges').insert({ student_roll: studentRoll, message: `Your parent sent a nudge to remind you to focus on your studies!` });
         if (error) {
@@ -1911,26 +2274,18 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
 
     async function checkForNudges() {
         if (loggedInUserType !== 'student') return;
-        const { data: nudges, error } = await supabase
-            .from('nudges')
-            .select('*')
-            .eq('student_roll', loggedInEntity.roll);
-
-        if (error) {
-            console.error("Error fetching nudges:", error);
-            return;
-        }
+        const { data: nudges, error } = await supabase.from('nudges').select('*').eq('student_roll', loggedInEntity.roll);
+        if (error) { console.error("Error fetching nudges:", error); return; }
 
         if (nudges && nudges.length > 0) {
             const nudgeMessages = nudges.map(n => n.message).join('\n');
             showNotification(nudgeMessages);
-
             const nudgeIds = nudges.map(n => n.id);
             await supabase.from('nudges').delete().in('id', nudgeIds);
         }
     }
-
-
+    
+    // --- COMMON & MISC FUNCTIONS ---
     async function openPerformanceReport(roll, summary=false){
       const [{ data: perf=[] }, { data: stu=[] }, { data: teachers=[] }, {data: tests=[]}] = await Promise.all([
         supabase.from('performance').select('teacher_id,subject,score,test_id,created_at').eq('student_roll', roll).order('created_at', { ascending:false }),
@@ -1991,7 +2346,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
       const text = document.getElementById('reportContent').innerText.slice(0, 1500);
       openWhatsAppMessage(`Performance Report:%0A%0A${text}`);
     };
-
+    
     // --- ONLINE TEST LOGIC ---
     async function renderOnlineTestsManager() {
         const { data: tests, error } = await supabase.from('online_tests').select('*').eq('section', activeSection).order('created_at', { ascending: false });
@@ -2046,10 +2401,10 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     let questionCount = 0;
     function addQuestionToCreator(data = null) {
         questionCount++;
+        const questionId = `q${questionCount}`;
         const questionDiv = document.createElement('div');
         questionDiv.className = 'p-3 bg-slate-900 rounded-lg space-y-2';
         
-        // FIX: Add fallback for missing question text
         let questionText = data?.question || '';
         if (!questionText && data?.options?.some(opt => opt)) {
             questionText = `[AI did not generate a question. Please type the question here based on the options below.]`;
@@ -2063,7 +2418,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         questionDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <p class="font-bold text-slate-400">Question ${questionCount}</p>
-                <select class="question-type-select bg-slate-700 p-1 rounded text-sm">
+                <select class="question-type-select bg-slate-700 p-1 rounded text-sm" data-question-id="${questionId}">
                     <option value="objective" ${type === 'objective' ? 'selected' : ''}>Objective</option>
                     <option value="subjective" ${type === 'subjective' ? 'selected' : ''}>Subjective</option>
                 </select>
@@ -2073,8 +2428,8 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     ${[0,1,2,3].map(i => `
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="correct_q${questionCount}" value="${i}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600" ${i === correctIndex ? 'checked' : ''}>
-                            <input type="text" class="option-input w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${options[i] || ''}">
+                            <input type="radio" name="correct_${questionId}" value="${i}" class="h-4 w-4 bg-slate-700 border-slate-500 text-indigo-600" ${i === correctIndex ? 'checked' : ''}>
+                            <input type="text" class="option-input w-full bg-slate-700 p-2 rounded-lg text-sm" placeholder="Option ${i+1}" value="${options[i]}">
                         </div>
                     `).join('')}
                 </div>
@@ -2171,22 +2526,61 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
     async function renderStudentOnlineTests(isParent = false) {
         const { data: tests, error } = await supabase.from('online_tests').select('*').eq('section', activeSection).order('created_at', { ascending: false });
         if (error) return `<p class="text-red-400">Could not load tests.</p>`;
+        
+        const { data: submissions, error: subError } = await supabase.from('test_submissions').select('id, test_id').eq('student_roll', loggedInEntity.roll);
+        const submittedTestIds = new Set((submissions || []).map(s => s.test_id));
+        const submissionMap = new Map((submissions || []).map(s => [s.test_id, s.id]));
 
-        const testCards = (tests || []).map(test => `
-            <div class="bg-slate-800 p-4 rounded-lg flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-bold">${test.title}</h3>
-                    <p class="text-sm text-slate-400">${test.is_offline ? 'Offline Test' : (test.questions?.length || 0) + ' questions'}</p>
+
+        const testCards = (tests || []).map(test => {
+            const hasSubmitted = submittedTestIds.has(test.id);
+            let buttonHtml = '';
+            if (isParent) {
+                 buttonHtml = hasSubmitted ? `<button class="btn btn-secondary" onclick="showAITestFeedback(${submissionMap.get(test.id)})"><i class="fas fa-robot"></i> View AI Feedback</button>` : `<span class="text-sm text-slate-400">Not taken</span>`;
+            } else {
+                if (hasSubmitted) {
+                    buttonHtml = `<button class="btn btn-primary" onclick="showAITestFeedback(${submissionMap.get(test.id)})"><i class="fas fa-robot"></i> View AI Feedback</button>`;
+                } else if (!test.is_offline) {
+                    buttonHtml = `<button class="btn btn-primary" onclick="startTest(${test.id})">Start Test</button>`;
+                }
+            }
+
+            return `
+                <div class="bg-slate-800 p-4 rounded-lg flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">${test.title}</h3>
+                        <p class="text-sm text-slate-400">${test.is_offline ? 'Offline Test' : (test.questions?.length || 0) + ' questions'}</p>
+                    </div>
+                    <div>
+                        ${test.attachment_url ? `<a href="${test.attachment_url}" target="_blank" class="btn btn-secondary mr-2"><i class="fas fa-download"></i> Paper</a>` : ''}
+                        ${buttonHtml}
+                    </div>
                 </div>
-                <div>
-                    ${test.attachment_url ? `<a href="${test.attachment_url}" target="_blank" class="btn btn-secondary mr-2"><i class="fas fa-download"></i> Paper</a>` : ''}
-                    ${!isParent && !test.is_offline ? `<button class="btn btn-primary" onclick="startTest(${test.id})">Start Test</button>` : ''}
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         return `<div class="space-y-4">${testCards || '<p>No online tests available yet.</p>'}</div>`;
     }
+
+    async function showAITestFeedback(submissionId) {
+        const contentDiv = document.getElementById('aiFeedbackContent');
+        contentDiv.innerHTML = loadingSpinner;
+        showModal(aiFeedbackModal);
+
+        const { data, error } = await supabase.from('test_submissions').select('ai_feedback').eq('id', submissionId).single();
+
+        if (error || !data) {
+            contentDiv.textContent = 'Could not load feedback.';
+            return;
+        }
+
+        if (data.ai_feedback) {
+            contentDiv.textContent = data.ai_feedback;
+        } else {
+            contentDiv.textContent = 'AI feedback is still being generated. Please check back in a few moments.';
+        }
+    }
+
 
     async function startTest(testId) {
         const { data: test, error } = await supabase.from('online_tests').select('*').eq('id', testId).single();
@@ -2247,17 +2641,18 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
                 .insert({
                     test_id: testId,
                     student_roll: loggedInEntity.roll,
-                    answers: answers
+                    answers: answers,
+                    student_name: loggedInEntity.name
                 })
                 .select()
                 .single();
 
             if (submissionError) throw submissionError;
 
-            showNotification('Test submitted! The AI is now grading your answers...');
+            showNotification('Test submitted! The AI is now grading your answers and preparing feedback...');
             hideModal(takeTestModal);
             
-            autoGradeSubmission(submissionData.id, testId, questions, answers);
+            autoGradeAndFeedback(submissionData.id, testId, questions, answers);
 
         } catch (error) {
             showNotification(`Error submitting: ${error.message}`);
@@ -2267,7 +2662,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
     }
 
-    async function autoGradeSubmission(submissionId, testId, questions, answers) {
+    async function autoGradeAndFeedback(submissionId, testId, questions, answers) {
         if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
             console.warn("AI grading skipped: Gemini API key not set.");
             return;
@@ -2277,33 +2672,34 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         let feedback = [];
         let totalScore = 0;
         let totalMarks = 0;
+        let gradingDataForFeedback = [];
 
         for (let i = 0; i < questions.length; i++) {
             const question = questions[i];
             const answer = answers[i];
             let score = 0;
             let fb = "N/A";
+            let marks = 1;
 
             if (question.type === 'objective') {
-                totalMarks += 1; // Assume 1 mark for objective
                 if (answer === question.correct_answer) {
                     score = 1; 
                     fb = "Correct";
                 } else {
                     score = 0;
-                    fb = "Incorrect";
+                    fb = `Incorrect. The correct option was ${question.correct_answer + 1}.`;
                 }
+                gradingDataForFeedback.push(`Q${i+1} (Objective): Scored ${score}/1. Student answered: "${question.options[answer]}". Correct answer: "${question.options[question.correct_answer]}".`);
             } else if (question.type === 'subjective' && answer) {
-                totalMarks += 5; // Assume 5 marks for subjective
+                marks = 5; // Assume 5 marks for subjective
                 const sampleAnswerPrompt = question.sample_answer ? `An ideal answer might be: "${question.sample_answer}"` : '';
                 const prompt = `
                     You are an AI grading assistant.
                     Question: "${question.question}"
                     ${sampleAnswerPrompt}
                     Student's Answer: "${answer}"
-                    Please grade this answer out of 5 and provide brief feedback.
-                    Return your response as a JSON object with two keys: "score" (an integer from 0 to 5) and "feedback" (a string).
-                `;
+                    Please grade this answer out of 5.
+                    Return your response as a JSON object with one key: "score" (an integer from 0 to 5).`;
                 try {
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                         method: 'POST',
@@ -2317,44 +2713,63 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
                     const data = await response.json();
                     const result = JSON.parse(data.candidates[0].content.parts[0].text);
                     score = result.score || 0;
-                    fb = result.feedback || "AI analysis failed.";
+                    fb = `AI Graded: ${score}/5`;
                 } catch (e) {
                     console.error("AI grading error:", e);
                     score = 0;
                     fb = "Could not be graded by AI.";
                 }
+                 gradingDataForFeedback.push(`Q${i+1} (Subjective): Scored ${score}/5. Student's answer: "${answer}". Question: "${question.question}".`);
             }
             scores.push(score);
             feedback.push(fb);
             totalScore += score;
+            totalMarks += marks;
         }
 
-        const { error: updateError } = await supabase
-            .from('test_submissions')
-            .update({ scores, feedback, total_score: totalScore })
-            .eq('id', submissionId);
+        // Update submission with scores
+        await supabase.from('test_submissions').update({ scores, feedback, total_score: totalScore }).eq('id', submissionId);
         
-        if (updateError) console.error("Error updating submission with grades:", updateError);
-
-        const { error: perfError } = await supabase
-            .from('performance')
-            .upsert({
+        // Update performance table
+        await supabase.from('performance').upsert({
                 student_roll: loggedInEntity.roll,
                 test_id: testId,
                 score: totalScore,
-                subject: 'Online Test',
+                subject: 'Online Test', 
                 teacher_id: loggedInEntity.id
             }, { onConflict: 'student_roll, test_id' });
 
-        if (perfError) console.error("Error inserting into performance table:", perfError);
-
-        const { error: testUpdateError } = await supabase
-            .from('online_tests')
-            .update({ total_marks: totalMarks })
-            .eq('id', testId)
-            .is('total_marks', null);
+        // Update test's total marks if not set
+        await supabase.from('online_tests').update({ total_marks: totalMarks }).eq('id', testId).is('total_marks', null);
         
-        if (testUpdateError) console.error("Error updating total marks on test:", testUpdateError);
+        // ** NEW: Generate consolidated feedback **
+        const feedbackPrompt = `
+            You are an AI academic coach. Analyze the following test results for a student and provide a concise, constructive feedback summary.
+            The summary should have two sections:
+            1.  **Strengths:** What did the student do well? Mention specific topics or question types where they scored high.
+            2.  **Areas for Improvement:** Where did the student struggle? Suggest specific, actionable steps for improvement. Be encouraging.
+
+            Here is the test data:
+            ${gradingDataForFeedback.join('\n')}
+            
+            Please provide the feedback directly to the student.
+        `;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: feedbackPrompt }] }] })
+            });
+            if (!response.ok) throw new Error('AI feedback generation failed.');
+            const data = await response.json();
+            const aiFeedbackText = data.candidates[0].content.parts[0].text;
+            
+            // Save the feedback
+            await supabase.from('test_submissions').update({ ai_feedback: aiFeedbackText }).eq('id', submissionId);
+        } catch (e) {
+            console.error("Error generating AI feedback:", e);
+        }
     }
 
 
@@ -2381,29 +2796,26 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         let typeInstruction = '';
         if (testType === 'objective') {
             typeInstruction = `All questions should be multiple-choice. For each question, provide:
-            - The question text as "question".
-            - An array of 4 string options as "options".
-            - The 0-indexed integer for the correct answer as "correct_answer".
+            - The question text.
+            - An array of 4 options.
+            - The 0-indexed integer for the correct answer.
             - A type field with the value "objective".`;
         } else if (testType === 'subjective') {
             typeInstruction = `All questions should be subjective (short answer). For each question, provide:
-            - The question text as "question".
-            - A sample answer for the teacher's reference as "sample_answer".
+            - The question text.
+            - A sample answer for the teacher's reference.
             - A type field with the value "subjective".`;
         } else { // mix
             typeInstruction = `Generate a mix of multiple-choice and subjective questions.
-            For multiple-choice questions, provide: "question", "options" (array of 4 strings), "correct_answer" (0-indexed integer), and type: "objective".
-            For subjective questions, provide: "question", "sample_answer", and type: "subjective".`;
+            For multiple-choice questions, provide: question, 4 options, the 0-indexed correct answer, and type: "objective".
+            For subjective questions, provide: question, a sample answer, and type: "subjective".`;
         }
         
         const prompt = `Generate ${numQuestions} questions for a coaching center test.
         Topic: ${topic}
         Difficulty: ${difficulty}
-        
         ${typeInstruction}
-
         IMPORTANT: The "question" field for each object MUST be a non-empty string containing the full question text. Do not leave it blank.
-        
         Return the output as a JSON object with a single key "questions" which is an array of these question objects.`;
 
         try {
@@ -2448,7 +2860,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
 
         const { data: submissions, error } = await supabase
             .from('test_submissions')
-            .select('student_roll, created_at, total_score')
+            .select('id, student_roll, created_at, total_score')
             .eq('test_id', testId);
 
         if (error) {
@@ -2479,9 +2891,12 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
                     <p class="font-semibold">${studentMap.get(sub.student_roll) || sub.student_roll}</p>
                     <p class="text-sm text-slate-400">Submitted on: ${new Date(sub.created_at).toLocaleString()}</p>
                 </div>
-                <div class="text-right">
-                    <p class="font-bold text-lg">${scoreText}</p>
-                    <p class="text-xs text-slate-400">Total Score</p>
+                 <div class="flex items-center gap-4">
+                    <button class="btn btn-secondary text-sm" onclick="showAITestFeedback(${sub.id})"><i class="fas fa-robot"></i> AI Feedback</button>
+                    <div class="text-right">
+                        <p class="font-bold text-lg">${scoreText}</p>
+                        <p class="text-xs text-slate-400">Total Score</p>
+                    </div>
                 </div>
             </div>
             `
@@ -2579,64 +2994,7 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
         }
     }
 
-    // --- AI Tutor Logic ---
-    const aiTutorSendBtn = document.getElementById('aiTutorSendBtn');
-    const aiTutorInput = document.getElementById('aiTutorInput');
-
-    const handleTutorSend = async () => {
-        const query = aiTutorInput.value.trim();
-        if (!query) return;
-
-        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
-            showNotification('The AI Tutor is not configured. Please contact your administrator.');
-            return;
-        }
-
-        aiTutorInput.value = '';
-        aiTutorSendBtn.disabled = true;
-        
-        const chatWindow = document.getElementById('aiTutorChatWindow');
-        const userBubble = document.createElement('div');
-        userBubble.className = 'chat-bubble user';
-        userBubble.textContent = query;
-        chatWindow.appendChild(userBubble);
-        
-        const assistantBubble = document.createElement('div');
-        assistantBubble.className = 'chat-bubble assistant thinking';
-        assistantBubble.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        chatWindow.appendChild(assistantBubble);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-
-        const prompt = `You are a friendly and encouraging AI Tutor for a high school student in India. Your student is studying subjects like Physics, Chemistry, Maths, and Biology. Explain concepts clearly, simply, and concisely. If asked a complex question, break it down.
-        Student's question: "${query}"`;
-
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            if (!response.ok) throw new Error('Failed to get response from AI Tutor.');
-            const data = await response.json();
-            const text = data.candidates[0].content.parts[0].text;
-            assistantBubble.textContent = text;
-            assistantBubble.classList.remove('thinking');
-        } catch (e) {
-            assistantBubble.textContent = `Sorry, I encountered an error: ${e.message}`;
-            assistantBubble.classList.remove('thinking');
-        } finally {
-            aiTutorSendBtn.disabled = false;
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-    };
-
-    aiTutorSendBtn.addEventListener('click', handleTutorSend);
-    aiTutorInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleTutorSend();
-        }
-    });
-
+    // --- INITIALIZATION ---
     window.addEventListener('load', () => {
       document.getElementById('userTypeSelect').value = 'student';
       document.getElementById('studentLoginFields').classList.remove('hidden');
@@ -2644,3 +3002,4 @@ const SUPABASE_URL = "https://jvviffrgqknhzlwhvsvt.supabase.co";
   </script>
 </body>
 </html>
+
